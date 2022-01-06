@@ -1,3 +1,5 @@
 # Contributing Guidelines
 
-TBD
+TBD...
+
+For now, fork away & just make PRs! Sharing is caring!
