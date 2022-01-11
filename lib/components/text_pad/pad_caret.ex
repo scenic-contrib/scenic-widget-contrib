@@ -1,4 +1,4 @@
-defmodule QuillEx.GUI.Components.PadCaret do
+defmodule ScenicWidgets.TextPad.PadCaret do
   use Scenic.Component
   require Logger
   #     @moduledoc """

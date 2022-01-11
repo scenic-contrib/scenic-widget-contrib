@@ -1,12 +1,12 @@
 # Scenic widget contrib
 
 This repo is intended as a "melting-pot" for experimental widgets, used by
-Scenic applications. If you are developing a Scenic app, clone this repo
-and include it as a local dependency, then as you develop new components,
-start putting them inside this library - not only will developing your
-Scenic components this way mean they are nicely de-coupled from your
-application logic, it makes them easier to share & be improved upon by
-the broader community.
+Scenic applications - kind of like a communal workbench. If you are
+developing a Scenic app, clone this repo and include it as a local dependency,
+then as you develop new components, start putting them inside this library -
+not only will developing your Scenic components this way mean they are
+nicely de-coupled from your application logic, it makes them easier to
+share & be improved upon by the broader community.
 
 ## How to import `scenic-widget-contrib` components
 

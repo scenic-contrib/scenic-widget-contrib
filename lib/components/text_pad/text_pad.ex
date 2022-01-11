@@ -1,49 +1,50 @@
-defmodule QuillEx.GUI.Components.TextPad do
+defmodule ScenicWidgets.TextPad do
   use Scenic.Component
   require Logger
-  alias QuillEx.GUI.Components.PadCaret
+  alias Scenic.Primitive.Style.Theme
 
-  # NOTE: This component is surprisingly dumb - input events are captured
-  #      higher up in the EditPane, which then get fired off as fluxus-
-  #      events. These to through the managers, which (if necessary) will
-  #      update the RadixState - that gets broadcast out and these components
-  #      end up being just thin wrappers around a piece of RadixState, so
-  #      we freely create/destroy them as needed.
 
-  def validate(%{frame: _f, data: d, cursor: _c} = data) when is_bitstring(d) do
-    # Logger.debug "#{__MODULE__} accepted params: #{inspect data}"
-    {:ok, data}
+  def validate(%{
+    frame: %ScenicWidgets.Core.Structs.Frame{} = _frame,
+    text: text,
+    format_opts: %{
+        alignment: :left,
+        wrap_opts: {:wrap, :end_of_line},
+        show_line_num?: false,
+    },
+    font: %{
+        size: _size,
+        metrics: %FontMetrics{} = _fm
+    }
+  } = args) when is_bitstring(text) do
+    Logger.debug("#{__MODULE__} accepted args: #{inspect(args)}")
+    {:ok, args |> Map.merge(%{cursors: [{1, %{col: 1, line: 1}}]})} # Cursor 1, 1st column, 1st line
   end
 
   def init(scene, args, opts) do
     Logger.debug("#{__MODULE__} initializing...")
 
-    theme = QuillEx.Utils.Themes.theme(opts)
-    font = QuillEx.RadixAgent.get().gui_config.fonts.primary
+    theme =
+      (opts[:theme] || Scenic.Primitive.Style.Theme.preset(:light))
+      |> Scenic.Primitive.Style.Theme.normalize()
+
+    #NOTE: This only works for one cursor, for now...
+    [{1, %{col: col, line: line}}] = args.cursors
 
     # NOTE: This *must* be wrong, because it ought to be some multiple of 14.4 (or whatever 1 char width is)
-    {_x_pos, line_num} =
-      cursor_coords = FontMetrics.position_at(args.data, args.cursor, font.size, font.metrics)
+    {x_pos, line_num} =
+        cursor_coords = FontMetrics.position_at(args.text, {col, line}, args.font.size, args.font.metrics)
 
-    IO.inspect(cursor_coords, label: "coords")
+    current_line = args.text |> String.split("\n") |> Enum.at(line_num)
 
-    # [longest_lint|rest] = lines = args.data
-    #     |> String.split("\n")
-    #     |> Enum.sort(& String.length(&1) >= String.length(&2))
-    # IO.inspect longest_lint
-
-    current_line = args.data |> String.split("\n") |> Enum.at(line_num)
-
-    # TODO this works even though FontMetrics.width returns 14.4 - maybe it needs to be truncated to be correct?
-    x_pos = String.length(current_line) * 14
 
     # TODO ok so the puzzle right now seems to be - I can get the width of 1 char using FontMetrics.width,
     #       and since I'm using a monospce font, that means thats 1 char width. It's a hack but...
     #       even so, I cant get the line hgiehght - maybe FontMetrics is lcking
 
-    ascent = FontMetrics.ascent(font.size, font.metrics)
-    descnt = FontMetrics.descent(font.size, font.metrics)
-    {x_min, y_min, x_max, y_max} = FontMetrics.max_box(font.size, font.metrics)
+    ascent = FontMetrics.ascent(args.font.size, args.font.metrics)
+    descnt = FontMetrics.descent(args.font.size, args.font.metrics)
+    {x_min, y_min, x_max, y_max} = FontMetrics.max_box(args.font.size, args.font.metrics)
 
     IO.inspect(ascent, label: "ascent")
     IO.inspect(descnt, label: "descnt")
@@ -78,16 +79,16 @@ defmodule QuillEx.GUI.Components.TextPad do
             stroke: {2, theme.border},
             scissor: args.frame.size
           )
-          |> Scenic.Primitives.text(args.data,
+          |> Scenic.Primitives.text(args.text,
             id: :text_buffer,
             font: :ibm_plex_mono,
-            font_size: font.size,
+            font_size: args.font.size,
             fill: theme.text,
             # translate: {0, ascent})
             # TODO this is what scenic does https://github.com/boydm/scenic/blob/master/lib/scenic/component/input/text_field.ex#L198
             translate: {0, ascent}
           )
-          |> PadCaret.add_to_graph(%{
+          |> ScenicWidgets.TextPad.PadCaret.add_to_graph(%{
             coords: {x_pos, line_num * line_height},
             height: text_height
           })
@@ -103,7 +104,29 @@ defmodule QuillEx.GUI.Components.TextPad do
 
     {:ok, init_scene}
   end
+  #   init_graph =
+  #     Scenic.Graph.build()
+  #     |> Scenic.Primitives.group(fn graph ->
+  #       graph
+  #       |> Scenic.Primitives.rect({100, 100},
+  #         id: :background,
+  #         fill: :red,
+  #         stroke: {2, :purple}
+  #       )
+  #     end)
+
+  #   init_scene =
+  #     scene
+  #     |> assign(graph: init_graph)
+  #     |> push_graph(init_graph)
+
+  #   {:ok, init_scene}
+  # end
 end
+
+
+
+
 
 # defmodule Scenic.Component.Input.TextField do
 #     @moduledoc """
