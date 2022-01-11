@@ -3,22 +3,25 @@ defmodule ScenicWidgets.TextPad do
   require Logger
   alias Scenic.Primitive.Style.Theme
 
-
-  def validate(%{
-    frame: %ScenicWidgets.Core.Structs.Frame{} = _frame,
-    text: text,
-    format_opts: %{
-        alignment: :left,
-        wrap_opts: {:wrap, :end_of_line},
-        show_line_num?: false,
-    },
-    font: %{
-        size: _size,
-        metrics: %FontMetrics{} = _fm
-    }
-  } = args) when is_bitstring(text) do
+  def validate(
+        %{
+          frame: %ScenicWidgets.Core.Structs.Frame{} = _frame,
+          text: text,
+          format_opts: %{
+            alignment: :left,
+            wrap_opts: {:wrap, :end_of_line},
+            show_line_num?: false
+          },
+          font: %{
+            size: _size,
+            metrics: %FontMetrics{} = _fm
+          }
+        } = args
+      )
+      when is_bitstring(text) do
     Logger.debug("#{__MODULE__} accepted args: #{inspect(args)}")
-    {:ok, args |> Map.merge(%{cursors: [{1, %{col: 1, line: 1}}]})} # Cursor 1, 1st column, 1st line
+    # Cursor 1, 1st column, 1st line
+    {:ok, args |> Map.merge(%{cursors: [{1, %{col: 1, line: 1}}]})}
   end
 
   def init(scene, args, opts) do
@@ -28,15 +31,15 @@ defmodule ScenicWidgets.TextPad do
       (opts[:theme] || Scenic.Primitive.Style.Theme.preset(:light))
       |> Scenic.Primitive.Style.Theme.normalize()
 
-    #NOTE: This only works for one cursor, for now...
+    # NOTE: This only works for one cursor, for now...
     [{1, %{col: col, line: line}}] = args.cursors
 
     # NOTE: This *must* be wrong, because it ought to be some multiple of 14.4 (or whatever 1 char width is)
     {x_pos, line_num} =
-        cursor_coords = FontMetrics.position_at(args.text, {col, line}, args.font.size, args.font.metrics)
+      cursor_coords =
+      FontMetrics.position_at(args.text, {col, line}, args.font.size, args.font.metrics)
 
     current_line = args.text |> String.split("\n") |> Enum.at(line_num)
-
 
     # TODO ok so the puzzle right now seems to be - I can get the width of 1 char using FontMetrics.width,
     #       and since I'm using a monospce font, that means thats 1 char width. It's a hack but...
@@ -104,6 +107,7 @@ defmodule ScenicWidgets.TextPad do
 
     {:ok, init_scene}
   end
+
   #   init_graph =
   #     Scenic.Graph.build()
   #     |> Scenic.Primitives.group(fn graph ->
@@ -123,10 +127,6 @@ defmodule ScenicWidgets.TextPad do
   #   {:ok, init_scene}
   # end
 end
-
-
-
-
 
 # defmodule Scenic.Component.Input.TextField do
 #     @moduledoc """
