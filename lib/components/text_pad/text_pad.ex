@@ -1,7 +1,6 @@
 defmodule ScenicWidgets.TextPad do
   use Scenic.Component
   require Logger
-  alias Scenic.Primitive.Style.Theme
 
   def validate(
         %{
@@ -36,10 +35,9 @@ defmodule ScenicWidgets.TextPad do
 
     # NOTE: This *must* be wrong, because it ought to be some multiple of 14.4 (or whatever 1 char width is)
     {x_pos, line_num} =
-      cursor_coords =
       FontMetrics.position_at(args.text, {col, line}, args.font.size, args.font.metrics)
 
-    current_line = args.text |> String.split("\n") |> Enum.at(line_num)
+    # current_line = args.text |> String.split("\n") |> Enum.at(line_num)
 
     # TODO ok so the puzzle right now seems to be - I can get the width of 1 char using FontMetrics.width,
     #       and since I'm using a monospce font, that means thats 1 char width. It's a hack but...

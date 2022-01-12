@@ -7,7 +7,7 @@ defmodule ScenicWidgets.TestPattern do
     {:ok, data}
   end
 
-  def init(scene, args, opts) do
+  def init(scene, _args, _opts) do
     Logger.debug("#{__MODULE__} initializing...")
 
     rect_size = {80, 80}
