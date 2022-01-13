@@ -29,8 +29,8 @@ defmodule ScenicWidgets.TextPad.PadCaret do
   @width 2
 
   # caret blink speed in hertz
-  @caret_hz 0.5
-  @caret_ms trunc(1000 / @caret_hz / 2)
+  # @caret_hz 0.5
+  # @caret_ms trunc(1000 / @caret_hz / 2)
 
   # def validate(%{coords: num} = data) when is_integer(num) and num >= 0 do
   def validate(%{coords: _coords, height: _h} = data) do
@@ -44,7 +44,9 @@ defmodule ScenicWidgets.TextPad.PadCaret do
     # {line, col} = args.coords
 
     # NOTE: `color` is not an option for this PadCaret, even though it is in the Scenic.TextField.Caret component
-    theme = QuillEx.Utils.Themes.theme(opts)
+    theme =
+      (opts[:theme] || Scenic.Primitive.Style.Theme.preset(:light))
+      |> Scenic.Primitive.Style.Theme.normalize()
 
     init_graph =
       Scenic.Graph.build()
