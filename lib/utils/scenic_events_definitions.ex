@@ -225,7 +225,9 @@ defmodule ScenicWidgets.ScenicEventsDefinitions do
       ]
 
       @valid_text_input_characters @all_letters ++
-                                     @all_numbers ++ @all_punctuation ++ [@space_bar, @enter_key]
+                                   @all_numbers ++
+                                   @all_punctuation ++
+                                   [@space_bar, @enter_key]
 
       ## convert a keystroke into a string - used for inputing text
 
@@ -311,8 +313,6 @@ defmodule ScenicWidgets.ScenicEventsDefinitions do
       def key2string(@right_parenthesis), do: ")"
       def key2string(@left_brace), do: "{"
       def key2string(@right_brace), do: "}"
-      def key2string(@left_brace), do: "{"
-      def key2string(@right_brace), do: "}"
       def key2string(@minus_sign), do: "-"
       def key2string(@apostrophe), do: "'"
 
@@ -343,6 +343,8 @@ defmodule ScenicWidgets.ScenicEventsDefinitions do
         #      - good design.
         raise "Unable to convert #{inspect(x)} to a valid string."
       end
-    end
-  end
-end
+
+    end # quote do
+  end # defmacro
+
+end # defmodule

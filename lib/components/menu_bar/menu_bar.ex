@@ -146,7 +146,7 @@ defmodule ScenicWidgets.MenuBar do
           #NOTE: We never see this rectangle beneath the sub_menu, but it
           #      gives this component a larger bounding box, which we
           #      need to detect when we've left the area with the mouse
-          graph_with_background = graph
+          graph
           |> Scenic.Primitives.rect({sub_menu_width, sub_menu_height})
           |> render_sub_menu.()
           |> Scenic.Primitives.rect({sub_menu_width, frame.dimensions.height+sub_menu_height}, translate: {0, -frame.dimensions.height}, stroke: {2, theme.border})
@@ -161,8 +161,8 @@ defmodule ScenicWidgets.MenuBar do
           {:noreply, scene}
   end
 
-  def handle_cast({:hover, {:top_index, index}} = new_mode, %{assigns: %{state: %{mode: current_mode}}} = scene) do
-      #Logger.debug "#{__MODULE__} changing state.mode to: #{inspect new_mode}, from: #{inspect current_mode}"
+  def handle_cast({:hover, {:top_index, index}} = new_mode, scene) do
+      #Logger.debug "#{__MODULE__} changing state.mode to: #{inspect new_mode}, from: #{inspect scene.assigns.state.mode}"
 
       new_state = scene.assigns.state
       |> Map.put(:mode, new_mode)
@@ -187,8 +187,8 @@ defmodule ScenicWidgets.MenuBar do
      {:noreply, scene}
   end
 
-  def handle_cast({:hover, {:top_index, t, :sub_index, s}} = new_mode, %{assigns: %{state: %{mode: _current_mode}}} = scene) do
-      #Logger.debug "#{__MODULE__} changing state.mode to: #{inspect new_mode}, from: #{inspect current_mode}"
+  def handle_cast({:hover, {:top_index, _t, :sub_index, _s}} = new_mode, scene) do
+      #Logger.debug "#{__MODULE__} changing state.mode to: #{inspect new_mode}, from: #{inspect scene.assigns.state.mode}"
 
       #NOTE: Here we don't actually have to do anything except update
       #      the state - drawing the sub-menu was done when we transitioned
@@ -241,16 +241,20 @@ defmodule ScenicWidgets.MenuBar do
       {:noreply, new_scene}
   end
 
+  def handle_cast({:cancel, _cancel_mode}, scene) do
+    #Logger.debug "#{__MODULE__} ignoring mode cancellation request, as we are not in #{inspect cancel_mode}"
+    {:noreply, scene}
+  end
+
   # Here we use the cursor_pos to trigger resets when the user navigates
   # away from the MenuBar. Right now it only uses the y axis, this is a bug
-  def handle_input({:cursor_pos, {x, y} = coords}, _context, scene) do
+  def handle_input({:cursor_pos, {_x, y}}, _context, scene) do
       #NOTE: `menu_bar_max_height` is the full height, including any
       #       currently rendered sub-menus. As new sub-menus of different
       #       lengths get rendered, this max-height will change.
       #
       #       menu_bar_max_height = @height + num_sub_menu*@sub_menu_height
-      {0.0, 0.0, _viewport_width, menu_bar_max_height} = bounds = Scenic.Graph.bounds(scene.assigns.graph)
-      #Logger.debug "MenuBar bounds: #{inspect bounds}"
+      {0.0, 0.0, _viewport_width, menu_bar_max_height} = Scenic.Graph.bounds(scene.assigns.graph)
 
       if y > menu_bar_max_height do
           GenServer.cast(self(), {:cancel, scene.assigns.state.mode})
@@ -272,8 +276,4 @@ defmodule ScenicWidgets.MenuBar do
       {:noreply, scene}
   end
 
-  def handle_cast({:cancel, cancel_mode}, scene) do
-      #Logger.debug "#{__MODULE__} ignoring mode cancellation request, as we are not in #{inspect cancel_mode}"
-      {:noreply, scene}
-  end
 end

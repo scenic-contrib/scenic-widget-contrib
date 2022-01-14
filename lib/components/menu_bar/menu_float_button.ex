@@ -59,7 +59,8 @@ defmodule ScenicWidgets.MenuBar.FloatButton do
         ])
   end
 
-  def handle_input({:cursor_pos, {x, y} = coords}, _context, scene) do
+  #TODO accept clicks, send msg bck up to menu bar??
+  def handle_input({:cursor_pos, {_x, _y} = coords}, _context, scene) do
       bounds = Scenic.Graph.bounds(scene.assigns.graph)
       theme  = scene.assigns.theme
 
@@ -82,28 +83,6 @@ defmodule ScenicWidgets.MenuBar.FloatButton do
       {:noreply, new_scene}
   end
 
-  #TODO accept clicks, send msg bck up to menu bar??
-  def handle_input({:cursor_pos, {x, y} = coords}, _context, scene) do
-      bounds = Scenic.Graph.bounds(scene.assigns.graph)
-
-      new_graph =
-          if coords |> ScenicWidgets.Utils.inside?(bounds) do
-              GenServer.cast(ScenicWidgets.MenuBar, {:hover, scene.assigns.state.menu_index})
-              scene.assigns.graph
-              |> Scenic.Graph.modify(:background, &Scenic.Primitives.update_opts(&1, fill: :green))
-          else
-              # GenServer.cast(ScenicWidgets.MenuBar, {:cancel, {:hover, scene.assigns.state.menu_index}})
-              scene.assigns.graph
-              |> Scenic.Graph.modify(:background, &Scenic.Primitives.update_opts(&1, fill: :blue))
-          end
-
-      new_scene = scene
-      |> assign(graph: new_graph)
-      |> push_graph(new_graph)
-
-      {:noreply, new_scene}
-  end
-
   def handle_input({:cursor_button, {:btn_left, 0, [], click_coords}}, _context, scene) do
       bounds = Scenic.Graph.bounds(scene.assigns.graph)
       if click_coords |> ScenicWidgets.Utils.inside?(bounds) do
@@ -112,7 +91,7 @@ defmodule ScenicWidgets.MenuBar.FloatButton do
       {:noreply, scene}
   end
 
-  def handle_input(input, _context, scene) do
+  def handle_input(_input, _context, scene) do
       # Logger.debug "#{__MODULE__} ignoring input: #{inspect input}..."
       {:noreply, scene}
   end
