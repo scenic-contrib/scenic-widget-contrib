@@ -20,7 +20,7 @@ defmodule ScenicWidgets.FrameBox do
         {:ok, data}
     end
   
-    def init(scene, args, opts) do
+    def init(scene, args, _opts) do
         Logger.debug("#{__MODULE__} initializing...")
   
   

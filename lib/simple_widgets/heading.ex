@@ -9,15 +9,15 @@ defmodule ScenicWidgets.Simple.Heading do
 
     Example:
 
-        graph
-        |> ScenicWidgets.Simple.Heading.add_to_graph(%{
-				text: "A title that I want to display",
-				frame: Frame.new(pin: {5, 5}, size: {500, {max_lines, 2}}),
-				font: :ibm_plex_mono,
-				color: :green,
-				# text_wrap_opts: :wrap #TODO
-				background_color: :yellow
-		})
+    graph
+    |> ScenicWidgets.Simple.Heading.add_to_graph(%{
+            text: "A title that I want to display",
+            frame: Frame.new(pin: {5, 5}, size: {500, {max_lines, 2}}),
+            font: :ibm_plex_mono,
+            color: :green,
+            # text_wrap_opts: :wrap #TODO
+            background_color: :yellow
+    })
     """
     
     def add_to_graph(graph, %{
