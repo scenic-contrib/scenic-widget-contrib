@@ -224,6 +224,13 @@ defmodule ScenicWidgets.ScenicEventsDefinitions do
         @apostrophe
       ]
 
+      @left_arrow {:key, {:key_left, @key_pressed, []}}
+      @right_arrow {:key, {:key_right, @key_pressed, []}}
+      @up_arrow {:key, {:key_up, @key_pressed, []}}
+      @down_arrow {:key, {:key_down, @key_pressed, []}}
+
+      @arrow_keys [@left_arrow, @right_arrow, @up_arrow, @down_arrow]
+
       @valid_text_input_characters @all_letters ++
                                      @all_numbers ++
                                      @all_punctuation ++

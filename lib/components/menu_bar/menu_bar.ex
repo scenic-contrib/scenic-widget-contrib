@@ -176,16 +176,15 @@ defmodule ScenicWidgets.MenuBar do
     graph
     |> Scenic.Primitives.group(
       fn graph ->
+        graph
         # NOTE: We never see this rectangle beneath the sub_menu, but it
         #      gives this component a larger bounding box, which we
         #      need to detect when we've left the area with the mouse
-        graph
-        |> Scenic.Primitives.rect({sub_menu_width, sub_menu_height})
+        # |> Scenic.Primitives.rect({sub_menu_width, frame.dimensions.height + sub_menu_height}, translate: {0, -frame.dimensions.height})
         |> render_sub_menu.()
-        |> Scenic.Primitives.rect({sub_menu_width, frame.dimensions.height + sub_menu_height},
-          translate: {0, -frame.dimensions.height},
-          stroke: {2, theme.border}
-        )
+        |> Scenic.Primitives.rect({sub_menu_width, sub_menu_height}, stroke: {2, theme.border}) # draw border
+        #NOTE: We can't set a negative x coordinate if it's the hard-left corner of the screen
+        |> Scenic.Primitives.line({{(if top_index == 1, do: 0, else: -2),0},{sub_menu_width+2,0}}, stroke: {2, theme.active}) # draw a line over the top of the sub-menu border so it blends in better with the menu_bar itself (and overlap the edges a little bit)
       end,
       id: :sub_menu,
       translate: {menu_item_width * (top_index - 1), frame.dimensions.height}
@@ -332,7 +331,7 @@ defmodule ScenicWidgets.MenuBar do
   end
 
   def handle_input({:key, {key, _dont_care, _dont_care_either}}, _context, scene) do
-    Logger.debug("#{__MODULE__} ignoring key: #{inspect(key)}")
+    #Logger.debug("#{__MODULE__} ignoring key: #{inspect(key)}")
     {:noreply, scene}
   end
 end

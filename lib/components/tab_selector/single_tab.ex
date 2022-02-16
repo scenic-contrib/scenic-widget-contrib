@@ -33,7 +33,7 @@ defmodule ScenicWidgets.TabSelector.SingleTab do
         {:ok, init_scene}
     end
 
-    def render(%{size: {_width, height}} = args, theme) do
+    def render(%{frame: %{size: {_width, height}}} = args, theme) do
         # https://github.com/boydm/scenic/blob/master/lib/scenic/component/button.ex#L200
         vpos = height/2 + (args.font.ascent/2) + (args.font.descent/3)
 
@@ -62,7 +62,7 @@ defmodule ScenicWidgets.TabSelector.SingleTab do
         bounds = Scenic.Graph.bounds(scene.assigns.graph)
         theme  = scene.assigns.theme
 
-        if click_coords |> ScenicWidgets.Utils.inside?(bounds) do
+        if hover_coords |> ScenicWidgets.Utils.inside?(bounds) do
             send_parent_event(scene, {:hover_tab, scene.assigns.label})
         end
 

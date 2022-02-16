@@ -2,27 +2,16 @@ defmodule ScenicWidgets.TextPad do
   use Scenic.Component
   require Logger
   use ScenicWidgets.ScenicEventsDefinitions
+  alias ScenicWidgets.TextPad.{ToolBag, Painter}
 
-  @modes [:read_only, :edit]
-  @wrap_opts [{:wrap, :end_of_line}, :no_wrap]
 
       # Scroll wrapping - for this, I can go ahead with existing text (which wraps),
     # but treat it as larger than another container. However, ultimately
     # I want to be able to disable the scroll-wrapping talked about above,
     # so that I can render  continuous line, & potentially scroll it
 
-    # inside-frame editing
-
-    # scroll-frame editing
-
-    # wrap-frame editing
-
-    # add line numbers on wrap-frame
-
-        # Implements wrapping - for this, I just need to figure out where
-    # existing wrapping is coming from, & tweak that
-
-    # In-box scrolling
+    
+    # Other unimplemented cases: Max 1 line height (e.g. KommandBuffer)
 
   def validate(
         %{
@@ -43,8 +32,7 @@ defmodule ScenicWidgets.TextPad do
         } = args
       )
       when is_bitstring(text)
-      and mode in @modes
-      and wrap_opts in @wrap_opts
+      and mode in [:read_only, :edit]
       and is_boolean(show_line_num?)
     do
       Logger.debug("#{__MODULE__} accepted args: #{inspect(args)}")
@@ -59,10 +47,9 @@ defmodule ScenicWidgets.TextPad do
 
   def init(scene, args, opts) do
     Logger.debug("#{__MODULE__} initializing...")
-
-    theme =
-      (opts[:theme] || Scenic.Primitive.Style.Theme.preset(:light))
-      |> Scenic.Primitive.Style.Theme.normalize()
+    theme = ScenicWidgets.Utils.Theme.get_theme(opts)
+    %{ascent: ascent, descent: descent} = ToolBag.calc_ascent_descent(args.font)
+    
 
     # NOTE: This only works for one cursor, for now...
     # [{1, %{col: _col, line: line}}] = args.cursors
@@ -77,12 +64,9 @@ defmodule ScenicWidgets.TextPad do
     #       and since I'm using a monospce font, that means thats 1 char width. It's a hack but...
     #       even so, I cant get the line hgiehght - maybe FontMetrics is lcking
 
-    ascent = FontMetrics.ascent(args.font.size, args.font.metrics)
-    descnt = FontMetrics.descent(args.font.size, args.font.metrics)
+    
     # {x_min, y_min, x_max, y_max} = FontMetrics.max_box(args.font.size, args.font.metrics)
 
-    # IO.inspect(ascent, label: "ascent")
-    # IO.inspect(descnt, label: "descnt")
 
     # text_height = ascent-descnt
     # text_height = 31.0
@@ -105,7 +89,7 @@ defmodule ScenicWidgets.TextPad do
 
     {frame_width, frame_height} = args.frame.size
 
-    init_graph = render_text_pad(args |> Map.merge(%{theme: theme}))
+    init_graph = Painter.render_text_pad(args |> Map.merge(%{theme: theme}))
 
     init_scene =
       scene
@@ -123,100 +107,9 @@ defmodule ScenicWidgets.TextPad do
     {:ok, init_scene}
   end
 
-  def render_text_pad(%{
-        mode: :read_only,
-        format_opts: %{
-          alignment: :left,
-          #TODO and grow infinitely long / or maybe cap it??
-          wrap_opts: {:wrap, :end_of_line}}} = args) do
+  
 
-    ascent = FontMetrics.ascent(args.font.size, args.font.metrics)
-    descnt = FontMetrics.descent(args.font.size, args.font.metrics)
-
-    wrapped_text = FontMetrics.wrap(
-                      args.text,
-                      args.frame.dimensions.width-(args.margin.left+args.margin.right), #REMINDER: Take off both margins when calculating the widt0
-                      args.font.size,
-                      args.font.metrics)
-
-    Scenic.Graph.build()
-    |> Scenic.Primitives.group(
-      fn graph ->
-        graph
-        |> Scenic.Primitives.rect(args.frame.size,
-          id: :background,
-          fill: args.theme.thumb,
-          stroke: {2, args.theme.border},
-          scissor: args.frame.size
-        )
-        |> Scenic.Primitives.text(wrapped_text,
-          id: :text_pad,
-          font: :ibm_plex_mono,
-          font_size: args.font.size,
-          fill: args.theme.text,
-          # translate: {0, ascent})
-          # TODO this is what scenic does https://github.com/boydm/scenic/blob/master/lib/scenic/component/input/text_field.ex#L198
-          translate: {args.margin.left, ascent}
-        )
-      end,
-      id: {__MODULE__, args.id},
-      translate: args.frame.pin
-    )
-  end
-
-  def render_text_pad(%{
-    mode: :edit,
-    format_opts: %{
-      alignment: :left,
-      wrap_opts: {:wrap, :end_of_line}}} = args) do
-
-    ascent = FontMetrics.ascent(args.font.size, args.font.metrics)
-    descnt = FontMetrics.descent(args.font.size, args.font.metrics)
-
-    wrapped_text = FontMetrics.wrap(
-      args.text,
-      args.frame.dimensions.width-(args.margin.left+args.margin.right), #REMINDER: Take off both margins when calculating the widt0
-      args.font.size,
-      args.font.metrics)
-
-    text_height = 29.0 #TODO figure this out for realsies
-
-    # NOTE: This only works for one cursor, for now...
-    # [{1, %{col: col, line: line}}] = args.cursors |> IO.inspect
-
-    #NOTE: This *must* be wrong, because it ought to be some multiple of 14.4 (or whatever 1 char width is)
-    {x_pos, line_num} =
-      FontMetrics.position_at(wrapped_text, args.cursor_pos, args.font.size, args.font.metrics)
-
-    Scenic.Graph.build()
-    |> Scenic.Primitives.group(
-      fn graph ->
-        graph
-        |> Scenic.Primitives.rrect(
-          {args.frame.dimensions.width, args.frame.dimensions.height, 12},
-          id: :background,
-          fill: args.theme.active,
-          stroke: {2, args.theme.border},
-          scissor: args.frame.size
-        )
-        |> Scenic.Primitives.text(wrapped_text,
-          id: :text_pad,
-          font: :ibm_plex_mono,
-          font_size: args.font.size,
-          fill: args.theme.text,
-          # TODO this is what scenic does https://github.com/boydm/scenic/blob/master/lib/scenic/component/input/text_field.ex#L198
-          translate: {args.margin.left, ascent}
-        )
-        |> ScenicWidgets.TextPad.PadCaret.add_to_graph(%{
-          coords: {x_pos, line_num*text_height},
-          height: text_height
-        })
-      end,
-      id: {__MODULE__, args.id},
-      translate: args.frame.pin
-    )
-  end
-
+  #TODO just forward all input up to StoryRiver, which wil then forward it all over to the event bus (InputListener)
   def handle_input(input, _context, scene) when input in @arrow_keys do
     IO.puts "ARROW"
     {:noreply, scene}
@@ -227,14 +120,6 @@ defmodule ScenicWidgets.TextPad do
 
     new_text = scene.assigns.text <> key2string(input)
     send_parent_event(scene, {:value_changed, scene.assigns.id, new_text})
-
-    # new_graph = scene.assigns.graph
-    # |> Scenic.Graph.modify(:text_pad, &Scenic.Primitives.text(&1, new_text))
-
-    # new_scene = scene
-    # |> assign(text: new_text)
-    # |> assign(graph: new_graph)
-    # |> push_graph(new_graph)
 
     {:noreply, scene}
   end
