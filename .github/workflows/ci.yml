@@ -35,7 +35,8 @@ jobs:
           ~/.hex
           ~/.mix
           _build
-        key: ${{ matrix.otp }}-${{ matrix.elixir }}
+          deps
+        key: ${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
     - name: Install Dependencies
       run: |
         mix local.rebar --force
