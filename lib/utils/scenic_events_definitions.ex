@@ -45,7 +45,8 @@ defmodule ScenicWidgets.ScenicEventsDefinitions do
       # {:key, {" ", :press, 1}}
       @left_shift_and_space_bar {:key, {:key_space, @key_pressed, [:shift]}}
       # {:key, {"tab", :press, 1}}
-      @left_shift_and_tab {:key, {:key_tab, @key_pressed, [:shift]}}
+      @shift_tab {:key, {:key_tab, @key_pressed, [:shift]}}
+      # @left_shift_and_tab {:key, {:key_tab, @key_pressed, [:shift]}} #TODO pretty sure we can delete this one?
 
       # NOTE: even though these are numbers, the last one in the tuple
       #      we send, is still always zero
@@ -235,6 +236,8 @@ defmodule ScenicWidgets.ScenicEventsDefinitions do
                                      @all_numbers ++
                                      @all_punctuation ++
                                      [@space_bar, @enter_key]
+
+      @meta_lowercase_s {:key, {:key_s, @key_pressed, [:meta]}}
 
       ## convert a keystroke into a string - used for inputing text
 

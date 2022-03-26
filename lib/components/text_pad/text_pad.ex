@@ -4,6 +4,9 @@ defmodule ScenicWidgets.TextPad do
   use ScenicWidgets.ScenicEventsDefinitions
   alias ScenicWidgets.TextPad.{ToolBag, Painter}
 
+  #NOTE ok so - there's gonna be no choice, I better just try it - make each
+  # line it's own (possibly dumb?) component.
+
 
       # Scroll wrapping - for this, I can go ahead with existing text (which wraps),
     # but treat it as larger than another container. However, ultimately
@@ -25,23 +28,22 @@ defmodule ScenicWidgets.TextPad do
             show_line_num?: show_line_num? #TODO this too
           },
           font: %{
-            name: _name,
             size: _size,
             metrics: %FontMetrics{} = _fm
           }
         } = args
       )
       when is_bitstring(text)
-      and mode in [:read_only, :edit]
+      and mode in [:read_only, :edit, {:vim, :normal}, {:vim, :insert}, {:vim, :visual}]
       and is_boolean(show_line_num?)
     do
       Logger.debug("#{__MODULE__} accepted args: #{inspect(args)}")
-      # Cursor 1, 1st column, 1st line
+
       final_args = args
       # |> Map.merge(%{cursors: [{1, %{col: 1, line: 1}}]})
-      |> Map.merge(%{cursor_pos: 0})
+      |> Map.merge(%{cursor_pos: args |> Map.get(:cursor, 0)}) # default to zero
       |> Map.merge(%{margin: %{left: 5, top: 0, bottom: 0, right: 5}})
-      
+
       {:ok, final_args}
   end
 
@@ -119,7 +121,8 @@ defmodule ScenicWidgets.TextPad do
     Logger.debug "#{__MODULE__} recv'd input: #{inspect input}"
 
     new_text = scene.assigns.text <> key2string(input)
-    send_parent_event(scene, {:value_changed, scene.assigns.id, new_text})
+    # send_parent_event(scene, {:value_changed, scene.assigns.id, new_text})
+    # cast_children(scene, {:move, 1}) # update the cursor...
 
     {:noreply, scene}
   end

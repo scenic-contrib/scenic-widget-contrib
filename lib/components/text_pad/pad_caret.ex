@@ -26,17 +26,23 @@ defmodule ScenicWidgets.TextPad.PadCaret do
   #     """
 
   # how wide the cursor is
-  @width 2
+  @cursor_width 2
+  @block_width 12
 
   # caret blink speed in hertz
   # @caret_hz 0.5
   # @caret_ms trunc(1000 / @caret_hz / 2)
 
-  # def validate(%{coords: num} = data) when is_integer(num) and num >= 0 do
-  def validate(%{coords: _coords, height: _h} = data) do
+  def validate(%{coords: _coords, height: _h, mode: _m} = data) do
     Logger.debug("#{__MODULE__} accepted params: #{inspect(data)}")
     {:ok, data}
   end
+
+  # def validate(%{coords: num} = data) when is_integer(num) and num >= 0 do
+  def validate(%{coords: _coords, height: _h} = data) do
+    validate(data |> Map.merge(%{mode: :cursor})) # vim-insert mode by default
+  end
+
 
   def init(scene, args, opts) do
     Logger.debug("#{__MODULE__} initializing...")
@@ -48,16 +54,23 @@ defmodule ScenicWidgets.TextPad.PadCaret do
       (opts[:theme] || Scenic.Primitive.Style.Theme.preset(:light))
       |> Scenic.Primitive.Style.Theme.normalize()
 
+    width = if args.mode == :block, do: @block_width, else: @cursor_width
+    # width =
+    #   if args.mode in @normal_modes do
+    #     @cursor_width
+    #   end
+
     init_graph =
       Scenic.Graph.build()
       |> Scenic.Primitives.group(
         fn graph ->
           graph
-          |> Scenic.Primitives.rect({@width, args.height},
+          |> Scenic.Primitives.rect({width, args.height},
             id: :blinker,
             fill: theme.text
           )
         end,
+        id: :blinker,
         translate: args.coords
       )
 
@@ -74,9 +87,23 @@ defmodule ScenicWidgets.TextPad.PadCaret do
       scene
       |> assign(graph: init_graph)
       # |> assign(frame: args.frame)
+      |> assign(coords: args.coords)
       |> push_graph(init_graph)
 
     {:ok, init_scene}
+  end
+
+  def handle_cast({:move, 1} = msg, %{assigns: %{coords: {x_pos, y_pos} = coords}} = scene) do
+    new_coords = {x_pos + 19, y_pos} #TODo get real char width lol
+    new_graph = scene.assigns.graph
+    |> Scenic.Graph.modify(:blinker, &Scenic.Primitives.update_opts(&1, translate: new_coords))
+
+    new_scene = scene
+    |> assign(graph: new_graph)
+    |> assign(coords: new_coords)
+    |> push_graph(new_graph)
+
+    {:noreply, new_scene}
   end
 end
 
