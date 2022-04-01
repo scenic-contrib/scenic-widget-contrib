@@ -80,14 +80,14 @@ defmodule ScenicWidgets.MenuBar.FloatButton do
         # TODO and change text to black
         |> Scenic.Graph.modify(
           :background,
-          &Scenic.Primitives.update_opts(&1, fill: theme.highlight)
+          &Scenic.Primitives.update_opts(&1, fill: theme.highlight, color: :black) #TODO use theme here
         )
       else
         # GenServer.cast(ScenicWidgets.MenuBar, {:cancel, {:hover, scene.assigns.state.menu_index}})
         scene.assigns.graph
         |> Scenic.Graph.modify(
           :background,
-          &Scenic.Primitives.update_opts(&1, fill: theme.active)
+          &Scenic.Primitives.update_opts(&1, fill: theme.active) #TODO use color: theme.something here
         )
       end
 
