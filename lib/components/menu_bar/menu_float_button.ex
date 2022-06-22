@@ -7,7 +7,7 @@ defmodule ScenicWidgets.MenuBar.FloatButton do
   just customized a little bit.
   """
 
-  def validate(%{label: _l, menu_index: _n, frame: _f, margin: _m, font: _fs} = data) do
+  def validate(%{label: _l, unique_id: _n, frame: _f, margin: _m, font: _fs} = data) do
     # Logger.debug "#{__MODULE__} accepted params: #{inspect data}"
     {:ok, data}
   end
@@ -30,7 +30,7 @@ defmodule ScenicWidgets.MenuBar.FloatButton do
         state: %{
           mode: :inactive,
           font: args.font,
-          menu_index: args.menu_index
+          unique_id: args.unique_id
         }
       )
       |> push_graph(init_graph)
@@ -62,7 +62,7 @@ defmodule ScenicWidgets.MenuBar.FloatButton do
           fill: theme.text
         )
       end,
-      id: {:float_button, args.menu_index},
+      id: {:float_button, args.unique_id},
       translate: args.frame.pin
     )
   end
@@ -74,7 +74,7 @@ defmodule ScenicWidgets.MenuBar.FloatButton do
 
     new_graph =
       if coords |> ScenicWidgets.Utils.inside?(bounds) do
-        GenServer.cast(ScenicWidgets.MenuBar, {:hover, scene.assigns.state.menu_index})
+        GenServer.cast(ScenicWidgets.MenuBar, {:hover, scene.assigns.state.unique_id})
 
         scene.assigns.graph
         # TODO and change text to black
@@ -83,7 +83,7 @@ defmodule ScenicWidgets.MenuBar.FloatButton do
           &Scenic.Primitives.update_opts(&1, fill: theme.highlight, color: :black) #TODO use theme here
         )
       else
-        # GenServer.cast(ScenicWidgets.MenuBar, {:cancel, {:hover, scene.assigns.state.menu_index}})
+        # GenServer.cast(ScenicWidgets.MenuBar, {:cancel, {:hover, scene.assigns.state.unique_id}})
         scene.assigns.graph
         |> Scenic.Graph.modify(
           :background,
@@ -103,7 +103,7 @@ defmodule ScenicWidgets.MenuBar.FloatButton do
     bounds = Scenic.Graph.bounds(scene.assigns.graph)
 
     if click_coords |> ScenicWidgets.Utils.inside?(bounds) do
-      GenServer.cast(ScenicWidgets.MenuBar, {:click, scene.assigns.state.menu_index})
+      GenServer.cast(ScenicWidgets.MenuBar, {:click, scene.assigns.state.unique_id})
     end
 
     {:noreply, scene}
