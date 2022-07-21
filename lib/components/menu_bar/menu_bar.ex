@@ -453,11 +453,11 @@ defmodule ScenicWidgets.MenuBar do
   #     translate: {menu_item_width*(top_index-1), frame.dimensions.height}
   #   )
 
-    ng = graph
-    |> Scenic.Primitives.group(
+    graph |> Scenic.Primitives.group(
       fn graph ->
 
         {final_graph, _final_index} = Enum.reduce(sub_menu, {graph, 1}, fn
+
           {label, _func}, {graph, sub_menu_index} ->
     
     
@@ -506,35 +506,44 @@ defmodule ScenicWidgets.MenuBar do
           #     # size: {sub_menu_width, state.sub_menu.height}
           #   })
     
-          # {{:sub_menu, label, sub_menu_items}, sub_index}, graph ->
+          {:sub_menu, label, sub_menu_items}, {graph, sub_menu_index} ->
+
+            new_graph = graph
+            |> FloatButton.add_to_graph(%{
+              label: label,
+              unique_id: [hover_index, sub_menu_index],
+              font: sub_menu_font,
+              frame: %{
+                pin: {(hover_index-1)*menu_item_width, menu_bar_frame.dimensions.height+(sub_menu_index-1)*state.sub_menu.height},
+                size: {sub_menu_width, state.sub_menu.height}
+              },
+              margin: @left_margin,
+              draw_sub_menu_triangle?: true
+            })
     
-          #     # pop_out_icon_height = 0.6*state.sub_menu.height
-          #     # pop_out_icon_coords = %{x: 0.84*sub_menu_width, y: (state.sub_menu.height-pop_out_icon_height)/2}
+            {new_graph, sub_menu_index+1}
     
-          #     graph
-          #     |> render_float_button(%{
-          #         label: label,
-          #         # menu_pos: menu_index ++ [sub_index],
-          #         # top_index_menu_width: top_index_menu_width,
-          #         # font: sub_menu_font,
-          #         # size: {sub_menu_width, state.sub_menu.height}
-          #     })
-          #     # draw the sub-menu & sigils over the top of the carry_graph
-          #     # |> ScenicWidgets.Utils.Shapes.right_pointing_triangle(%{
-          #     #     # top_left: pop_out_icon_coords,
-          #     #     # height: pop_out_icon_height,
-          #     #     # color: theme.border
-          #     # })
-          #     #now, lol let's just try it, call render sub-menu with a different offset
-          #     #TODO add a border around this sub menu
-          #     # |> do_render_sub_menu(%{
-          #     #     state: state,
-          #     # #     menu_pos: state.menu_pos ++ [top_index, sub_index], #TODO
-          #     #     menu_index: menu_index ++ [sub_index], #TODO
-          #     # #     # index: top_index, #TODO this needs to be updated to 
-          #     #     frame: frame, #TODO need to move the frame over 1 offset
-          #     #     theme: theme
-          #     # })
+ 
+              # graph
+              
+              # |> render_float_button(%{
+              #     label: label,
+              #     # menu_pos: menu_index ++ [sub_index],
+              #     # top_index_menu_width: top_index_menu_width,
+              #     # font: sub_menu_font,
+              #     # size: {sub_menu_width, state.sub_menu.height}
+              # })
+
+              #now, lol let's just try it, call render sub-menu with a different offset
+              #TODO add a border around this sub menu
+              # |> do_render_sub_menu(%{
+              #     state: state,
+              # #     menu_pos: state.menu_pos ++ [top_index, sub_index], #TODO
+              #     menu_index: menu_index ++ [sub_index], #TODO
+              # #     # index: top_index, #TODO this needs to be updated to 
+              #     frame: frame, #TODO need to move the frame over 1 offset
+              #     theme: theme
+              # })
     
     
         end)
@@ -554,12 +563,6 @@ defmodule ScenicWidgets.MenuBar do
       end,
       id: :sub_menu
     )
-
-    bounds = Scenic.Graph.bounds(ng)
-    IO.inspect bounds, label: "BBBB"
-
-    ng
-
   end
 
   def render_all_sub_menus(graph, %{

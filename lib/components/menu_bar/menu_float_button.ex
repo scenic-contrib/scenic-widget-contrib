@@ -9,7 +9,11 @@ defmodule ScenicWidgets.MenuBar.FloatButton do
 
   def validate(%{label: _l, unique_id: _n, frame: _f, margin: _m, font: _fs} = data) do
     # Logger.debug "#{__MODULE__} accepted params: #{inspect data}"
-    {:ok, data}
+    if Map.get(data, :draw_sub_menu_triangle?, false) do
+      {:ok, data}
+    else
+      {:ok, data |> Map.merge(%{draw_sub_menu_triangle?: false})}
+    end
   end
 
   def init(scene, args, opts) do
@@ -46,12 +50,12 @@ defmodule ScenicWidgets.MenuBar.FloatButton do
   end
 
   def render(args, theme) do
-    {_width, height} = args.frame.size
+    {width, height} = args.frame.size
 
     # https://github.com/boydm/scenic/blob/master/lib/scenic/component/button.ex#L200
     vpos = height / 2 + args.font.ascent / 2 + args.font.descent / 3
 
-    Scenic.Graph.build()
+    new_graph = Scenic.Graph.build()
     |> Scenic.Primitives.group(
       fn graph ->
         graph
@@ -70,6 +74,26 @@ defmodule ScenicWidgets.MenuBar.FloatButton do
       id: {:float_button, args.unique_id},
       translate: args.frame.pin
     )
+
+    if args.draw_sub_menu_triangle? do
+      {top_left_x, top_left_y} = args.frame.pin #TODO dunno why we need to do this, why cant we go args.frame.top_left_x?
+
+      pop_out_icon_height = 0.6*height
+      pop_out_icon_coords = %{
+        x: top_left_x+(0.87*width),
+        y: top_left_y+(height-pop_out_icon_height)/2
+      }
+  
+      # draw the sub-menu & sigils over the top of the carry_graph
+      new_graph
+      |> ScenicWidgets.Utils.Shapes.right_pointing_triangle(%{
+          top_left: pop_out_icon_coords,
+          height: pop_out_icon_height,
+          color: theme.border
+      })
+    else
+      new_graph
+    end
   end
 
   # TODO accept clicks, send msg bck up to menu bar??
