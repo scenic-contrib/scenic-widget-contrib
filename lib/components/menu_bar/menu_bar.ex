@@ -80,7 +80,6 @@ defmodule ScenicWidgets.MenuBar do
     {:ok, init_scene}
   end
 
-  
 
   def handle_cast(new_mode, %{assigns: %{state: %{mode: current_mode}}} = scene)
       when new_mode == current_mode do
@@ -91,11 +90,7 @@ defmodule ScenicWidgets.MenuBar do
   #NOTE: Put a hard-limit on menu size for now, just for safety - I doubt we will ever want/need more than 20 top menu items anyway
   #NOTE: A list of length 1 mean's we're hoving over a top-level menu item - one within the menu bar itself
   def handle_cast({:hover, hover_index} = new_mode, scene) do
-    # Logger.debug "#{__MODULE__} changing state.mode to: #{inspect new_mode}, from: #{inspect scene.assigns.state.mode}"
-
-    IO.puts "HOVER HOVER #{inspect new_mode}"
-
-
+    Logger.debug "#{__MODULE__} changing state.mode to: #{inspect new_mode}, from: #{inspect scene.assigns.state.mode}"
 
     #TODO here if we're hovering over a sub-menu, render that sub-menu, and
     # if we stay inside that new sub-menu, keep rendering it
@@ -103,44 +98,26 @@ defmodule ScenicWidgets.MenuBar do
       scene.assigns.state
       |> Map.put(:mode, new_mode)
 
-
     new_graph =
       scene.assigns.graph
       |> Scenic.Graph.delete(:sub_menu)
       |> render_all_sub_menus(%{
-        hover_index: hover_index,
         state: new_state,
         frame: scene.assigns.frame,
         theme: scene.assigns.theme
       })
 
-
-#       #TODO ok so this was close, but not what we ultimately want...
-#       # |> render_sub_menus_for_index(%{
-
-# #TODO sub-menu is not the way... we need to re-think how to render this whole menu
-
-#       |> render_sub_menu(%{
-#         index: menu_index,
-#         state: scene.assigns.state,
-#         frame: scene.assigns.frame,
-#         theme: scene.assigns.theme
-#       })
-
     new_scene =
       scene
       |> assign(state: new_state)
-      # |> assign(graph: new_graph)
-      # |> push_graph(new_graph)
+      |> assign(graph: new_graph)
+      |> push_graph(new_graph)
 
     {:noreply, new_scene}
   end
 
 
 
-
-      #notes - look at item - is it a sub-menu> if yes, render that sub-0menu.
-    # if not, do nothing!!
 
   # def render_sub_menus_for_index(%{
   #   #NOTE we need to keep old sub-menus alive if we're multi-layers deep
@@ -152,7 +129,6 @@ defmodule ScenicWidgets.MenuBar do
   #   {:fixed, menu_item_width} = state.item_width
   #   num_top_items = Enum.count(state.menu_opts)
   #   sub_menu = get_sub_menu(state.menu_opts, menu_index)
-  #   IO.inspect sub_menu, label: "SUBBY"
   #   num_sub_menu_items = Enum.count(sub_menu)
   #   sub_menu_width = menu_item_width + num_top_items*@left_margin # make sub-menus wider, proportional to how many top-level items there are
   #   sub_menu_height = num_sub_menu_items * state.sub_menu.height
@@ -184,7 +160,6 @@ defmodule ScenicWidgets.MenuBar do
   #   #      into a `{:hover, x}` mode, and highlighting the float-buttons
   #   #      is done inside the FloatButton itself.
 
-  #   IO.inspect menu_index, label: "ii capn"
 
   #   new_state =
   #     scene.assigns.state
@@ -252,28 +227,28 @@ defmodule ScenicWidgets.MenuBar do
     {:noreply, new_scene}
   end
 
-  def handle_cast({:frame_reshape, new_frame}, scene) do
-    new_graph =
-      scene.assigns.graph
-      |> Scenic.Graph.modify(:menu_background, &Scenic.Primitives.rect(&1, new_frame.size))
-
-    new_scene =
-      scene
-      |> assign(graph: new_graph)
-      |> assign(frame: new_frame)
-      |> push_graph(new_graph)
-
-    {:noreply, new_scene}
-  end
-
   def handle_cast({:cancel, _cancel_mode}, scene) do
     # Logger.debug "#{__MODULE__} ignoring mode cancellation request, as we are not in #{inspect cancel_mode}"
     {:noreply, scene}
   end
 
-  #TODO either it's menu_map (preferred) or menu_opts, not both!!
-  def handle_cast({:put_menu_map, new_menu_map}, scene) do
+  # def handle_cast({:frame_reshape, new_frame}, scene) do
+  #   new_graph =
+  #     scene.assigns.graph
+  #     |> Scenic.Graph.modify(:menu_background, &Scenic.Primitives.rect(&1, new_frame.size))
 
+  #   new_scene =
+  #     scene
+  #     |> assign(graph: new_graph)
+  #     |> assign(frame: new_frame)
+  #     |> push_graph(new_graph)
+
+  #   {:noreply, new_scene}
+  # end
+
+  def handle_cast({:put_menu_map, new_menu_map}, scene) do
+    
+    #TODO either it's menu_map (preferred) or menu_opts, not both!!
     new_state = scene.assigns.state |> Map.put(:menu_opts, new_menu_map)
     # new_state = state
     # |> put_in([:assigns, :frame, :menu_map], new_menu_map)
@@ -406,7 +381,6 @@ defmodule ScenicWidgets.MenuBar do
   #   sub_menu_render_list = extract_sub_menus(state.menu_opts, hover_coords)
 
 
-  #   IO.inspect sub_menu_render_list, label: "Sub Menu render list"
 
 
   #   #TODO up on this top level we need one graph called sub_menu` defined so we can 
@@ -414,36 +388,172 @@ defmodule ScenicWidgets.MenuBar do
   #   do_render_all_sub_menus(graph, %{sub_menu_list: []})
   # end
 
+  # def render_all_sub_menus(graph, %{state: %{mode: {:hover, []}} }) do
+  #   IO.puts "NONONONONONONONONO wut"
+  #   graph
+  # end
 
   # we are hovering over a sub-menu - add this one to the list of menus to render
   def render_all_sub_menus(graph, %{
     # index: menu_index,
-    hover_index: [top_lvl|sub_hover],
+    # hover_index: [top_lvl|sub_hover] = hover_index,
     # hover_item: hover_item,
-    state: state,
+    state: %{mode: {:hover, [hover_index]}, menu_opts: menu} = state,
     frame: menu_bar_frame,
     theme: theme
   }) do
-    IO.puts "NONONONONONONONONO wut"
-    menu = state.menu_opts
-    IO.inspect menu, label: "Ratatoiui"
-    IO.inspect hover_index, label: "Guitars"
+    IO.inspect hover_index, label: "SUB MENU HOVER INDEX"
 
+    [{:sub_menu, label, sub_menu}] = [Enum.at(menu, hover_index-1)]
 
+    {:fixed, menu_item_width} = state.item_width
+    sub_menu_width = menu_item_width + 3 * @left_margin #TODO GET NUM_TOP_ITE,S0
+    
+    sub_menu_font = %{
+      size: state.sub_menu.font_size,
+      ascent: FontMetrics.ascent(state.sub_menu.font_size, state.font.metrics),
+      descent: FontMetrics.descent(state.sub_menu.font_size, state.font.metrics),
+      metrics: state.font.metrics
+    }
 
+      #   graph
+  #   |> Scenic.Primitives.group(
+  #     fn graph ->
+  #       graph
+  #       # NOTE: We never see this rectangle beneath the sub_menu, but it
+  #       #      gives this component a larger bounding box, which we
+  #       #      need to detect when we've left the area with the mouse
+  #       # |> Scenic.Primitives.rect({sub_menu_width, frame.dimensions.height + sub_menu_height}, translate: {0, -frame.dimensions.height})
+  #       |> do_render_sub_menu(%{state: state, menu_index: menu_index, frame: frame, theme: theme})
+  #       |> Scenic.Primitives.rect({sub_menu_width, sub_menu_height}, stroke: {2, theme.border}) # draw border
+  #       #NOTE: We can't set a negative x coordinate if it's the hard-left corner of the screen
+  #       |> Scenic.Primitives.line({{(if top_index == 1, do: 0, else: -2),0},{sub_menu_width+2,0}}, stroke: {2, theme.active}) # draw a line over the top of the sub-menu border so it blends in better with the menu_bar itself (and overlap the edges a little bit)
+  #     end,
+  #     id: :sub_menu,
+  #     translate: {menu_item_width*(top_index-1), frame.dimensions.height}
+  #   )
 
+    ng = graph
+    |> Scenic.Primitives.group(
+      fn graph ->
 
-    # Enum.reduce(sub_menu_tree, graph, fn sub_menu, graph ->
-    #   graph
-    #   |> render_single_sub_menu(sub_menu)
-    # end)
+        {final_graph, _final_index} = Enum.reduce(sub_menu, {graph, 1}, fn
+          {label, _func}, {graph, sub_menu_index} ->
+    
+    
+            top_left = {
+              #NOTE the top-level offset is already taken into account, it's in the pin of the sub-menu frame!!
+              # (depth_of_sub_menu_tree-1)*sub_menu_width,
+              (hover_index-1)*sub_menu_width, #TODO it;s here somehow...
+              # ((top_index-1) + (depth_of_sub_menu_tree))*sub_menu_width,
+              # (top_index-1)*top_index_menu_width,
+              # 0, 
+              #NOTE: The reason we need `depth_of_sub_menu_tree` here is to counter
+              #      the fact that I choose to start indexes at 1, but when it comes
+              #      to rendering, we need them to start at zero. If we have a sub-menu
+              #      which is 3 levels deep, we need to cvounter-act this error
+              #      three times, so we use the depth to offset this issue
+              # (sub_button_vertical_render_offset-depth_of_sub_menu_tree)*sub_menu_height #NOTE depth of sub tree should be the offset
+              sub_menu_index*100
+            }
+            
+            new_graph = graph
+            |> FloatButton.add_to_graph(%{
+              label: label,
+              unique_id: [hover_index, sub_menu_index],
+              # menu_index: [hover_index],
+              font: sub_menu_font,
+              frame: %{
+                pin: {(hover_index-1)*menu_item_width, menu_bar_frame.dimensions.height+(sub_menu_index-1)*state.sub_menu.height},
+                size: {sub_menu_width, state.sub_menu.height}
+              },
+              # frame: %{
+              #   # REMINDER: coords are like this, {x_coord, y_coord}
+              #   pin: top_left,
+              #   size: button_size
+              # },
+              margin: @left_margin
+            })
+    
+            {new_graph, sub_menu_index+1}
+            
+          # {{label, _func}, sub_index}, graph ->
+          #   graph |> render_float_button(%{
+          #     label: label,
+          #     # menu_pos: menu_index ++ [sub_index],
+          #     # top_index_menu_width: top_index_menu_width,
+          #     # font: sub_menu_font,
+          #     # size: {sub_menu_width, state.sub_menu.height}
+          #   })
+    
+          # {{:sub_menu, label, sub_menu_items}, sub_index}, graph ->
+    
+          #     # pop_out_icon_height = 0.6*state.sub_menu.height
+          #     # pop_out_icon_coords = %{x: 0.84*sub_menu_width, y: (state.sub_menu.height-pop_out_icon_height)/2}
+    
+          #     graph
+          #     |> render_float_button(%{
+          #         label: label,
+          #         # menu_pos: menu_index ++ [sub_index],
+          #         # top_index_menu_width: top_index_menu_width,
+          #         # font: sub_menu_font,
+          #         # size: {sub_menu_width, state.sub_menu.height}
+          #     })
+          #     # draw the sub-menu & sigils over the top of the carry_graph
+          #     # |> ScenicWidgets.Utils.Shapes.right_pointing_triangle(%{
+          #     #     # top_left: pop_out_icon_coords,
+          #     #     # height: pop_out_icon_height,
+          #     #     # color: theme.border
+          #     # })
+          #     #now, lol let's just try it, call render sub-menu with a different offset
+          #     #TODO add a border around this sub menu
+          #     # |> do_render_sub_menu(%{
+          #     #     state: state,
+          #     # #     menu_pos: state.menu_pos ++ [top_index, sub_index], #TODO
+          #     #     menu_index: menu_index ++ [sub_index], #TODO
+          #     # #     # index: top_index, #TODO this needs to be updated to 
+          #     #     frame: frame, #TODO need to move the frame over 1 offset
+          #     #     theme: theme
+          #     # })
+    
+    
+        end)
+    
+        final_graph
+        # Enum.reduce(sub_menu_tree, graph, fn sub_menu, graph ->
+        #   graph
+        #   |> render_single_sub_menu(sub_menu)
+        # end)
+    
+        # {final_graph, _final_menu = Enum.reduce(hover_index, {graph, menu}, fn hover_num, {graph, acc_menu} ->
+        #   new_graph = graph
+        # end)}
+    
+        # final_graph = graph #TODO
 
-    {final_graph, _final_menu = Enum.reduce(hover_index, {graph, menu}, fn hover_num, {graph, acc_menu} ->
-      new_graph = graph
-      |> 
-    end)
+      end,
+      id: :sub_menu
+    )
 
-    final_graph
+    bounds = Scenic.Graph.bounds(ng)
+    IO.inspect bounds, label: "BBBB"
+
+    ng
+
+  end
+
+  def render_all_sub_menus(graph, %{
+    # index: menu_index,
+    # hover_index: [top_lvl|sub_hover] = hover_index,
+    # hover_item: hover_item,
+    state: %{mode: {:hover, [hover_index|_rest]}, menu_opts: menu} = state,
+    frame: menu_bar_frame,
+    theme: theme
+  } = args) do
+    IO.puts "hovering over a sub sub menu... not yet #{inspect hover_index}"
+    #TODO just render first drop[down for now, handle sub subs in a minute]
+    new_state = %{state|mode: {:hover, [hover_index]}}
+    render_all_sub_menus(graph, Map.merge(args, %{state: new_state}))
   end
 
   # the case where we're hovering over a button
@@ -457,30 +567,30 @@ defmodule ScenicWidgets.MenuBar do
         {{label, _func}, sub_index}, graph ->
           graph |> render_float_button(%{
             label: label,
-            menu_pos: menu_index ++ [sub_index],
-            top_index_menu_width: top_index_menu_width,
-            font: sub_menu_font,
-            size: {sub_menu_width, state.sub_menu.height}
+            # menu_pos: menu_index ++ [sub_index],
+            # top_index_menu_width: top_index_menu_width,
+            # font: sub_menu_font,
+            # size: {sub_menu_width, state.sub_menu.height}
           })
 
           {{:sub_menu, label, sub_menu_items}, sub_index}, graph ->
 
-            pop_out_icon_height = 0.6*state.sub_menu.height
-            pop_out_icon_coords = %{x: 0.84*sub_menu_width, y: (state.sub_menu.height-pop_out_icon_height)/2}
+            # pop_out_icon_height = 0.6*state.sub_menu.height
+            # pop_out_icon_coords = %{x: 0.84*sub_menu_width, y: (state.sub_menu.height-pop_out_icon_height)/2}
 
             graph
             |> render_float_button(%{
                 label: label,
-                menu_pos: menu_index ++ [sub_index],
-                top_index_menu_width: top_index_menu_width,
-                font: sub_menu_font,
-                size: {sub_menu_width, state.sub_menu.height}
+                # menu_pos: menu_index ++ [sub_index],
+                # top_index_menu_width: top_index_menu_width,
+                # font: sub_menu_font,
+                # size: {sub_menu_width, state.sub_menu.height}
             })
             # draw the sub-menu & sigils over the top of the carry_graph
             |> ScenicWidgets.Utils.Shapes.right_pointing_triangle(%{
-                top_left: pop_out_icon_coords,
-                height: pop_out_icon_height,
-                color: theme.border
+                # top_left: pop_out_icon_coords,
+                # height: pop_out_icon_height,
+                # color: theme.border
             })
             #now, lol let's just try it, call render sub-menu with a different offset
             #TODO add a border around this sub menu
@@ -498,70 +608,70 @@ defmodule ScenicWidgets.MenuBar do
   end
 
 
-  defp do_render_sub_menu(graph, %{state: state, menu_index: [_h|_rest] = menu_index, frame: frame, theme: theme}) do
-    {:fixed, menu_item_width} = state.item_width
-    {:fixed, top_index_menu_width} = state.item_width
-    top_index_menu_width = top_index_menu_width + @left_margin
-    num_top_items = Enum.count(state.menu_opts)
+  # defp do_render_sub_menu(graph, %{state: state, menu_index: [_h|_rest] = menu_index, frame: frame, theme: theme}) do
+  #   {:fixed, menu_item_width} = state.item_width
+  #   {:fixed, top_index_menu_width} = state.item_width
+  #   top_index_menu_width = top_index_menu_width + @left_margin
+  #   num_top_items = Enum.count(state.menu_opts)
 
-    [top_index|sub_indices] = menu_index
-    sub_menu = get_sub_menu(state.menu_opts, menu_index)
-    # {_top_label, sub_menu} = state.menu_opts |> Enum.at(top_index - 1)
-    num_sub_menu_items = Enum.count(sub_menu)
-    sub_menu = sub_menu |> Enum.with_index(1)
-    sub_menu_width = menu_item_width + num_top_items * @left_margin
-    sub_menu_height = num_sub_menu_items * state.sub_menu.height
-    sub_menu_font = %{
-        size: state.sub_menu.font_size,
-        ascent: FontMetrics.ascent(state.sub_menu.font_size, state.font.metrics),
-        descent: FontMetrics.descent(state.sub_menu.font_size, state.font.metrics),
-        metrics: state.font.metrics
-      }
+  #   [top_index|sub_indices] = menu_index
+  #   sub_menu = get_sub_menu(state.menu_opts, menu_index)
+  #   # {_top_label, sub_menu} = state.menu_opts |> Enum.at(top_index - 1)
+  #   num_sub_menu_items = Enum.count(sub_menu)
+  #   sub_menu = sub_menu |> Enum.with_index(1)
+  #   sub_menu_width = menu_item_width + num_top_items * @left_margin
+  #   sub_menu_height = num_sub_menu_items * state.sub_menu.height
+  #   sub_menu_font = %{
+  #       size: state.sub_menu.font_size,
+  #       ascent: FontMetrics.ascent(state.sub_menu.font_size, state.font.metrics),
+  #       descent: FontMetrics.descent(state.sub_menu.font_size, state.font.metrics),
+  #       metrics: state.font.metrics
+  #     }
 
-    sub_menu |> Enum.reduce(graph, fn
+  #   sub_menu |> Enum.reduce(graph, fn
         
-        {{label, _func}, sub_index}, graph ->
-          graph |> render_float_button(%{
-            label: label,
-            menu_pos: menu_index ++ [sub_index],
-            top_index_menu_width: top_index_menu_width,
-            font: sub_menu_font,
-            size: {sub_menu_width, state.sub_menu.height}
-          })
+  #       {{label, _func}, sub_index}, graph ->
+  #         graph |> render_float_button(%{
+  #           label: label,
+  #           menu_pos: menu_index ++ [sub_index],
+  #           top_index_menu_width: top_index_menu_width,
+  #           font: sub_menu_font,
+  #           size: {sub_menu_width, state.sub_menu.height}
+  #         })
 
-          {{:sub_menu, label, sub_menu_items}, sub_index}, graph ->
+  #         {{:sub_menu, label, sub_menu_items}, sub_index}, graph ->
 
-            pop_out_icon_height = 0.6*state.sub_menu.height
-            pop_out_icon_coords = %{x: 0.84*sub_menu_width, y: (state.sub_menu.height-pop_out_icon_height)/2}
+  #           pop_out_icon_height = 0.6*state.sub_menu.height
+  #           pop_out_icon_coords = %{x: 0.84*sub_menu_width, y: (state.sub_menu.height-pop_out_icon_height)/2}
 
-            graph
-            |> render_float_button(%{
-                label: label,
-                menu_pos: menu_index ++ [sub_index],
-                top_index_menu_width: top_index_menu_width,
-                font: sub_menu_font,
-                size: {sub_menu_width, state.sub_menu.height}
-            })
-            # draw the sub-menu & sigils over the top of the carry_graph
-            |> ScenicWidgets.Utils.Shapes.right_pointing_triangle(%{
-                top_left: pop_out_icon_coords,
-                height: pop_out_icon_height,
-                color: theme.border
-            })
-            #now, lol let's just try it, call render sub-menu with a different offset
-            #TODO add a border around this sub menu
-            # |> do_render_sub_menu(%{
-            #     state: state,
-            # #     menu_pos: state.menu_pos ++ [top_index, sub_index], #TODO
-            #     menu_index: menu_index ++ [sub_index], #TODO
-            # #     # index: top_index, #TODO this needs to be updated to 
-            #     frame: frame, #TODO need to move the frame over 1 offset
-            #     theme: theme
-            # })
+  #           graph
+  #           |> render_float_button(%{
+  #               label: label,
+  #               menu_pos: menu_index ++ [sub_index],
+  #               top_index_menu_width: top_index_menu_width,
+  #               font: sub_menu_font,
+  #               size: {sub_menu_width, state.sub_menu.height}
+  #           })
+  #           # draw the sub-menu & sigils over the top of the carry_graph
+  #           |> ScenicWidgets.Utils.Shapes.right_pointing_triangle(%{
+  #               top_left: pop_out_icon_coords,
+  #               height: pop_out_icon_height,
+  #               color: theme.border
+  #           })
+  #           #now, lol let's just try it, call render sub-menu with a different offset
+  #           #TODO add a border around this sub menu
+  #           # |> do_render_sub_menu(%{
+  #           #     state: state,
+  #           # #     menu_pos: state.menu_pos ++ [top_index, sub_index], #TODO
+  #           #     menu_index: menu_index ++ [sub_index], #TODO
+  #           # #     # index: top_index, #TODO this needs to be updated to 
+  #           #     frame: frame, #TODO need to move the frame over 1 offset
+  #           #     theme: theme
+  #           # })
 
 
-    end)
-  end
+  #   end)
+  # end
 
 
 
@@ -599,36 +709,33 @@ defmodule ScenicWidgets.MenuBar do
   # end
 
   # def render_sub_menu(graph, %{state: state, index: %{top_index: top_index, sub_index: _sub_index}, frame: frame, theme: theme}) do
-  def render_sub_menu(graph, %{state: state, index: [top_index|_rest] = menu_index, frame: frame, theme: theme}) when top_index >= 1  and top_index <= 20 do
-    {:fixed, menu_item_width} = state.item_width
-    num_top_items = Enum.count(state.menu_opts)
-    sub_menu = get_sub_menu(state.menu_opts, menu_index)
-    IO.inspect sub_menu, label: "SUBBY"
-    num_sub_menu_items = Enum.count(sub_menu)
-    sub_menu_width = menu_item_width + num_top_items*@left_margin # make sub-menus wider, proportional to how many top-level items there are
-    sub_menu_height = num_sub_menu_items * state.sub_menu.height
+  # def render_sub_menu(graph, %{state: state, index: [top_index|_rest] = menu_index, frame: frame, theme: theme}) when top_index >= 1  and top_index <= 20 do
+  #   {:fixed, menu_item_width} = state.item_width
+  #   num_top_items = Enum.count(state.menu_opts)
+  #   sub_menu = get_sub_menu(state.menu_opts, menu_index)
+  #   num_sub_menu_items = Enum.count(sub_menu)
+  #   sub_menu_width = menu_item_width + num_top_items*@left_margin # make sub-menus wider, proportional to how many top-level items there are
+  #   sub_menu_height = num_sub_menu_items * state.sub_menu.height
 
-    graph
-    |> Scenic.Primitives.group(
-      fn graph ->
-        graph
-        # NOTE: We never see this rectangle beneath the sub_menu, but it
-        #      gives this component a larger bounding box, which we
-        #      need to detect when we've left the area with the mouse
-        # |> Scenic.Primitives.rect({sub_menu_width, frame.dimensions.height + sub_menu_height}, translate: {0, -frame.dimensions.height})
-        |> do_render_sub_menu(%{state: state, menu_index: menu_index, frame: frame, theme: theme})
-        |> Scenic.Primitives.rect({sub_menu_width, sub_menu_height}, stroke: {2, theme.border}) # draw border
-        #NOTE: We can't set a negative x coordinate if it's the hard-left corner of the screen
-        |> Scenic.Primitives.line({{(if top_index == 1, do: 0, else: -2),0},{sub_menu_width+2,0}}, stroke: {2, theme.active}) # draw a line over the top of the sub-menu border so it blends in better with the menu_bar itself (and overlap the edges a little bit)
-      end,
-      id: :sub_menu,
-      translate: {menu_item_width*(top_index-1), frame.dimensions.height}
-    )
-  end
+  #   graph
+  #   |> Scenic.Primitives.group(
+  #     fn graph ->
+  #       graph
+  #       # NOTE: We never see this rectangle beneath the sub_menu, but it
+  #       #      gives this component a larger bounding box, which we
+  #       #      need to detect when we've left the area with the mouse
+  #       # |> Scenic.Primitives.rect({sub_menu_width, frame.dimensions.height + sub_menu_height}, translate: {0, -frame.dimensions.height})
+  #       |> do_render_sub_menu(%{state: state, menu_index: menu_index, frame: frame, theme: theme})
+  #       |> Scenic.Primitives.rect({sub_menu_width, sub_menu_height}, stroke: {2, theme.border}) # draw border
+  #       #NOTE: We can't set a negative x coordinate if it's the hard-left corner of the screen
+  #       |> Scenic.Primitives.line({{(if top_index == 1, do: 0, else: -2),0},{sub_menu_width+2,0}}, stroke: {2, theme.active}) # draw a line over the top of the sub-menu border so it blends in better with the menu_bar itself (and overlap the edges a little bit)
+  #     end,
+  #     id: :sub_menu,
+  #     translate: {menu_item_width*(top_index-1), frame.dimensions.height}
+  #   )
+  # end
 
   # def get_sub_menu(menu_opts, menu_index) do
-  #   IO.inspect menu_opts
-
   #   menu_index |> Enum.map_reduce(menu_index, fn {index, acc_menu} ->
   #     {label, _sub_menu} = Enum.at(acc_menu, index-1, :error)
   #   end)
@@ -784,8 +891,6 @@ defmodule ScenicWidgets.MenuBar do
     #      a function, meaning this is a button, or a list, meaning this
     #      is another sub-menu). Instead... this function has 2 handle clauses here.
 
-    IO.inspect ii, label: "GETTING"
-    IO.inspect menu_opts
     result = index |> Enum.reduce(menu_opts, fn ii, menu ->
       Enum.at(menu_opts, ii-1)
     end)
@@ -821,8 +926,6 @@ defmodule ScenicWidgets.MenuBar do
   end
 
   # def get_sub_menu(menu_opts, label = [ii|rest]) do
-  #   IO.inspect label
-  #   IO.inspect menu_opts, label: "BIG M"
   #   {_label, sub_menu} = Enum.at(menu_opts, ii-1, :error)
   #   get_sub_menu(sub_menu, rest)
   # end

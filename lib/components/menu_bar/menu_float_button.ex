@@ -40,6 +40,11 @@ defmodule ScenicWidgets.MenuBar.FloatButton do
     {:ok, init_scene}
   end
 
+  @impl Scenic.Component
+  def bounds(%{frame: %{pin: {top_left_x, top_left_y}, size: {width, height}}}, _opts) do
+    {top_left_x, top_left_y, top_left_x+width, top_left_y+height}
+  end
+
   def render(args, theme) do
     {_width, height} = args.frame.size
 

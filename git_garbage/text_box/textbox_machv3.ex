@@ -33,13 +33,11 @@ defmodule QuillEx.Components.NotePad.TextBoxMachv3 do
 
   def render(state, first_render?: true) do
     {width, height} = state.frame.size
-    IO.inspect(width, label: "Width")
 
     font_size = 20
     text_left_margin = 20
     {:ok, metrics} = TruetypeMetrics.load("./assets/fonts/IBMPlexMono-Regular.ttf")
     text_width = FontMetrics.width(state.text, font_size, metrics)
-    IO.inspect(text_width, label: "WIdth222")
 
     wrapped_text = FontMetrics.wrap(state.text, width - text_left_margin * 2, font_size, metrics)
 
