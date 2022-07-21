@@ -172,15 +172,20 @@ defmodule ScenicWidgets.MenuBar do
   #   {:noreply, new_scene}
   # end
 
-  def handle_cast(
-        {:click, [top_ii, sub_ii]}, #TODO here needs to be able to handle multi-layer menus
-        %{assigns: %{state: %{menu_opts: menu_opts}}} = scene
-  ) when top_ii >= 1 and top_ii <= 20 and sub_ii >= 1 and sub_ii <= 20 do
-    # REMINDER: I use indexes which start at 1, Elixir does not :P 
-    {_label, sub_menu} = menu_opts |> Enum.at(top_ii - 1)
-    # REMINDER: I use indexes which start at 1, Elixir does not :P 
+  #NOTE: Do nothing when we simply click on a top menu bar (..?)
+  def handle_cast({:click, [top_ii]}, scene) do
+    {:noreply, scene}
+  end
 
-    case sub_menu |> Enum.at(sub_ii - 1) do
+  def handle_cast(
+        {:click, [top_ii | sub_menu_click_coords] = click_coords}, #TODO here needs to be able to handle multi-layer menus
+        %{assigns: %{state: %{menu_opts: menu_opts}}} = scene
+  ) when top_ii >= 1 and top_ii <= 10 do
+
+    {:sub_menu, _label, sub_menu} = menu_opts |> Enum.at(top_ii - 1)
+    clicked_item = traverse_menu(sub_menu, sub_menu_click_coords)
+
+    case clicked_item do
       #NOTE: Sub-menus may be either a normal float button, or they may
       #      be further sub-menus - we have to handle all cases here
 
@@ -194,6 +199,21 @@ defmodule ScenicWidgets.MenuBar do
         # if we click on a sub-menu, just do nothing...
         {:noreply, scene}
     end
+  end
+
+  def traverse_menu(menu, [] = _coords) do
+    menu |> Enum.at(0)
+  end
+
+  def traverse_menu(menu, [x] = _coords) do
+    # REMINDER: I use indexes which start at 1, Elixir does not :P 
+    menu |> Enum.at(x-1)
+  end
+
+  def traverse_menu(menu, [x|rest] = _coords) do
+    # REMINDER: I use indexes which start at 1, Elixir does not :P 
+    sub_menu = menu |> Enum.at(x-1)
+    traverse_menu(sub_menu, rest)
   end
 
   def handle_cast({:cancel, :inactive}, scene) do
