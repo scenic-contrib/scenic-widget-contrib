@@ -7,13 +7,17 @@ defmodule ScenicWidgets.MenuBar.FloatButton do
   just customized a little bit.
   """
 
-  def validate(%{label: _l, unique_id: _n, frame: _f, margin: _m, font: _fs} = data) do
+  def validate(%{label: _l, unique_id: _n, frame: _f, margin: _m, font: _fs, hover_highlight?: _hh} = data) do
     # Logger.debug "#{__MODULE__} accepted params: #{inspect data}"
     if Map.get(data, :draw_sub_menu_triangle?, false) do
       {:ok, data}
     else
       {:ok, data |> Map.merge(%{draw_sub_menu_triangle?: false})}
     end
+  end
+
+  def validate(args) do
+    validate(args |> Map.merge(%{hover_highlight?: false}))
   end
 
   def init(scene, args, opts) do
@@ -53,7 +57,7 @@ defmodule ScenicWidgets.MenuBar.FloatButton do
     {width, height} = args.frame.size
 
     # https://github.com/boydm/scenic/blob/master/lib/scenic/component/button.ex#L200
-    vpos = height / 2 + args.font.ascent / 2 + args.font.descent / 3
+    vpos = height/2 + args.font.ascent/2 + args.font.descent/3
 
     new_graph = Scenic.Graph.build()
     |> Scenic.Primitives.group(
@@ -61,7 +65,7 @@ defmodule ScenicWidgets.MenuBar.FloatButton do
         graph
         |> Scenic.Primitives.rect(args.frame.size,
           id: :background,
-          fill: theme.active
+          fill: (if args.hover_highlight?, do: theme.highlight, else: theme.active)
         )
         |> Scenic.Primitives.text(args.label,
           id: :label,
@@ -101,31 +105,37 @@ defmodule ScenicWidgets.MenuBar.FloatButton do
     bounds = Scenic.Graph.bounds(scene.assigns.graph)
     theme = scene.assigns.theme
 
-    new_graph =
-      if coords |> ScenicWidgets.Utils.inside?(bounds) do
-        GenServer.cast(ScenicWidgets.MenuBar, {:hover, scene.assigns.state.unique_id})
+    if coords |> ScenicWidgets.Utils.inside?(bounds) do
+      GenServer.cast(ScenicWidgets.MenuBar, {:hover, scene.assigns.state.unique_id})
+    end
 
-        scene.assigns.graph
-        # TODO and change text to black
-        |> Scenic.Graph.modify(
-          :background,
-          &Scenic.Primitives.update_opts(&1, fill: theme.highlight, color: :black) #TODO use theme here
-        )
-      else
-        # GenServer.cast(ScenicWidgets.MenuBar, {:cancel, {:hover, scene.assigns.state.unique_id}})
-        scene.assigns.graph
-        |> Scenic.Graph.modify(
-          :background,
-          &Scenic.Primitives.update_opts(&1, fill: theme.active) #TODO use color: theme.something here
-        )
-      end
+    # new_graph =
+    #   if coords |> ScenicWidgets.Utils.inside?(bounds) do
+    #     GenServer.cast(ScenicWidgets.MenuBar, {:hover, scene.assigns.state.unique_id})
 
-    new_scene =
-      scene
-      |> assign(graph: new_graph)
-      |> push_graph(new_graph)
+    #     scene.assigns.graph
+    #     # TODO and change text to black
+    #     |> Scenic.Graph.modify(
+    #       :background,
+    #       &Scenic.Primitives.update_opts(&1, fill: theme.highlight, color: :black) #TODO use theme here
+    #     )
+    #   else
+    #     # GenServer.cast(ScenicWidgets.MenuBar, {:cancel, {:hover, scene.assigns.state.unique_id}})
+    #     scene.assigns.graph
+    #     |> Scenic.Graph.modify(
+    #       :background,
+    #       &Scenic.Primitives.update_opts(&1, fill: theme.active) #TODO use color: theme.something here
+    #     )
+    #   end
 
-    {:noreply, new_scene}
+    # new_scene =
+    #   scene
+    #   |> assign(graph: new_graph)
+    #   |> push_graph(new_graph)
+
+    # {:noreply, new_scene}
+
+    {:noreply, scene}
   end
 
   def handle_input({:cursor_button, {:btn_left, 0, [], click_coords}}, _context, scene) do
