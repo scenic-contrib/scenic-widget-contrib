@@ -384,15 +384,22 @@ defmodule ScenicWidgets.MenuBar do
               label: label,
               sub_menu_index: sub_menu_index,
               item_index: menu_item_index,
+              offsets: offsets,
               draw_sub_menu_triangle?: do_draw_sub_menu_triangle?
             }))
 
             {new_graph, menu_item_index+1}
           end)
 
-        # draw a border around the sub-menu
+        # draw border around the sub-menu
         final_acc_graph
-        |> Scenic.Primitives.rect({args.sub_menu_width, num_menu_items*args.state.sub_menu.height}, stroke: {2, args.theme.border}, translate: {menu_item_width*(top_hover_index-1), args.frame.dimensions.height}) # draw the border-box
+        |> Scenic.Primitives.rect(
+          {args.sub_menu_width, num_menu_items*args.state.sub_menu.height}, # draw the border-box
+            stroke: {2, args.theme.border},
+            translate: {
+              (top_hover_index-1)*menu_item_width + (offsets.x*args.sub_menu_width),
+              args.frame.dimensions.height
+        }) 
         #NOTE: This next line draw a "black" (or whatever color our menu bar background is)
         # over the top of the sub-menu border-box drawn above, so that instead of a completely
         # square border, we cover up the top-line of the border so that it blends in better
@@ -400,6 +407,7 @@ defmodule ScenicWidgets.MenuBar do
         #NOTE: We can't set a negative x coordinate if it's the hard-left corner of the screen,
         # so we have this cute little hack to set the first item's line to zero - the others all
         # have a 2 pixel overlap on either side, this ensures the top-line of the border-box is completely invisible
+        #TODO figure out whether or not this is a sub-menu sitting on the very top (offsets.y = 0) or if it's a sub menu hanging of the bottom
         |> Scenic.Primitives.line({{(if top_hover_index == 1, do: 0, else: -2),0},{args.sub_menu_width+2,0}}, stroke: {2, args.theme.active}, translate: {menu_item_width*(top_hover_index-1), args.frame.dimensions.height})
 
       end,
@@ -417,43 +425,12 @@ defmodule ScenicWidgets.MenuBar do
 
     menu_item_frame = %{
       pin: {
-        (top_hover_index-1)*menu_item_width,
-        args.frame.dimensions.height+((args.item_index-1)*args.state.sub_menu.height)
+        (top_hover_index-1)*menu_item_width + (args.offsets.x*args.sub_menu_width),
+        args.frame.dimensions.height+(((args.item_index-1)+args.offsets.y)*args.state.sub_menu.height)
       },
       size: {args.sub_menu_width, args.state.sub_menu.height}
     }
 
-    # menu_item_frame = %{
-    #   pin: {
-    #     ((hover_index-1)*menu_item_width)+(sub_menu_depth_offset.x*sub_menu_width),
-    #     menu_bar_frame.dimensions.height+(((sub_menu_index-1)+sub_menu_depth_offset.y)*state.sub_menu.height)
-    #   },
-    #   size: {sub_menu_width, state.sub_menu.height}
-    # }
-
-  #           button_frame = %{
-  #             pin: {
-  #               ((hover_index-1)*menu_item_width)+(sub_menu_depth_offset.x*sub_menu_width),
-  #               menu_bar_frame.dimensions.height+(((sub_menu_index-1)+sub_menu_depth_offset.y)*state.sub_menu.height)
-  #             },
-  #             size: {sub_menu_width, state.sub_menu.height}
-  #           }
-
-    # button_frame = %{
-    #   pin: {
-    #     ((hover_index-1)*menu_item_width),
-    #     menu_bar_frame.dimensions.height+(((sub_menu_index-1)+sub_menu_depth_offset.y)*state.sub_menu.height)
-    #   },
-    #   size: {sub_menu_width, state.sub_menu.height}
-    # }
-
-    #           button_frame = %{
-    #             pin: {
-    #               ((hover_index-1)*menu_item_width)+(sub_menu_depth_offset.x*sub_menu_width),
-    #               menu_bar_frame.dimensions.height+(((sub_menu_index-1)+sub_menu_depth_offset.y)*state.sub_menu.height)
-    #             },
-    #             size: {sub_menu_width, state.sub_menu.height}
-    #           }
           
     item_unique_id = args.sub_menu_index ++ [args.item_index]
 
@@ -484,46 +461,65 @@ defmodule ScenicWidgets.MenuBar do
   end
 
   defp calc_sub_menu_dropdowns(%{state: %{mode: {:hover, [top_hover_index]}, menu_map: menu_map}}) do
+    # this is the case of just rendering a single, first-level sub menu
     [{:sub_menu, _label, top_lvl_sub_menu}] = [Enum.at(menu_map, top_hover_index-1)]
     #NOTE: No offsets for a single menu, offsets only apply for sub-sub menus...
-    [{_sub_menu_id = [top_hover_index], %{x_offset: 0, y_offset: 0}, top_lvl_sub_menu}]
+    [{_sub_menu_id = [top_hover_index], _offsets = %{x: 0, y: 0}, top_lvl_sub_menu}]
   end
 
-  defp calc_sub_menu_dropdowns(%{state: %{mode: {:hover, [top_hover_index|rest_hover_chain]}, menu_map: menu_map}}) do
-    depth = Enum.count(rest_hover_chain)
+  defp calc_sub_menu_dropdowns(%{state: %{mode: {:hover, hover_chain = [top_hover_index|_rest]}, menu_map: menu_map}} = args) do
+    depth = Enum.count(hover_chain)
 
-    #TODO here, need to do the work, calculate the list of sub-menus o render with offsets...
-    IO.inspect depth, label: "DDD"
+    # get the first menu in the chain by spoofing the call, as if we were simply hovering over one of the top menu-buttons
+    [first_menu] = args
+    |> put_in([:state, :mode], {:hover, [top_hover_index]})
+    |> calc_sub_menu_dropdowns()
 
-      #             # }, {%{x: sub_menu_depth_offset.x+1, y: sub_menu_depth_offset.y+sub_menu_index-1}, sub_menu_rest})
-  #             }, {%{x: sub_menu_depth_offset.x+1, y: sub_menu_depth_offset.y+3}, sub_menu_rest})
-
-  #   sub_menu_to_render = case hover_item do
-  #     # nil ->
-  #     #   top_lvl_sub_menu
-  #     {_label, _func} ->
-  #       top_lvl_sub_menu
-  #     {:sub_menu, _label, sub_sub_menu} ->
-  #       sub_sub_menu
-  #     menu_as_list when is_list(menu_as_list) ->
-  #       menu_as_list
-  #   end
-
-
-     #NOTE: x_offset here tells us how many "menus" to the right to render our first sub-menu, e.g. if we hover over the 3rd top level menu item, move "2 menus over"
-
-    #TODO check if we're hovering over a sub-menu, if we are, then we need to figure that out lol!
-
-    [{:sub_menu, _label, top_lvl_sub_menu}] = [Enum.at(menu_map, top_hover_index-1)]
-    #NOTE: No offsets for a single menu, offsets only apply for sub-sub menus...
-    [{_sub_menu_id = [top_hover_index], %{x_offset: 0, y_offset: 0}, top_lvl_sub_menu}]
+    # now call the recursive part, seeding the results (a lsit of lists/menus) with the one we've already calculated
+    do_calc_sub_menu_dropdowns(args, [first_menu], hover_chain, {1, depth})
+    # |> IO.inspect(label: "DROPDOWNSSS")
   end
 
-  defp fetch_item_at(sub_menu, [x]) when is_integer(x) do
+  defp do_calc_sub_menu_dropdowns(_args, sub_menu_list, _hover_chain, {count, depth}) when count >= depth do
+    sub_menu_list # base case, we've finished calculating the menus
+  end
+
+  defp do_calc_sub_menu_dropdowns(args, sub_menu_list, hover_chain, {count, depth}) do
+    
+    sub_menu_id = Enum.take(hover_chain, depth)
+    Logger.debug "rendering a sub-sub menu... #{inspect sub_menu_id}"
+
+    {:ok, hover_item} = fetch_item_at(args.state.menu_map, sub_menu_id)
+
+    # check if we're hovering over a sub-menu...
+    case hover_item do
+      {_label, _func} ->
+        # don't add any new sub-menus...
+        do_calc_sub_menu_dropdowns(args, sub_menu_list, hover_chain, {count+1, depth})
+      {:sub_menu, _label, new_sub_menu} ->
+          next_menu = 
+          #TODO calc real offsets somehow!!
+          #NOTE: x_offset here tells us how many "menus" to the right to render our first sub-menu, e.g. if we hover over the 3rd top level menu item, move "2 menus over"
+            [{sub_menu_id, %{x: 1, y: 0}, [{"new", &QuillEx.API.Buffer.new/0},{"new", &QuillEx.API.Buffer.new/0},{"new", &QuillEx.API.Buffer.new/0}]}]
+
+          do_calc_sub_menu_dropdowns(args, sub_menu_list ++ next_menu, hover_chain, {count+1, depth})
+    end
+  end
+
+  def fetch_item_at({:sub_menu, _label, sub_menu}, [x]) when is_list(sub_menu) and is_integer(x) do
     {:ok, Enum.at(sub_menu, x-1)}
   end
 
-  defp fetch_item_at(sub_menu, [x|rest]) do
+  def fetch_item_at(sub_menu, [x]) when is_list(sub_menu) and is_integer(x) do
+    {:ok, Enum.at(sub_menu, x-1)}
+  end
+
+  def fetch_item_at(sub_menu, [x|rest]) when is_list(sub_menu) and is_integer(x) do
+    next_menu = Enum.at(sub_menu, x-1)
+    fetch_item_at(next_menu, rest)
+  end
+
+  def fetch_item_at({:sub_menu, _label, sub_menu}, [x|rest]) when is_list(sub_menu) and is_integer(x) do
     next_menu = Enum.at(sub_menu, x-1)
     fetch_item_at(next_menu, rest)
   end
