@@ -376,66 +376,22 @@ defmodule ScenicWidgets.MenuBar do
                 new_graph = render_sub_menu_item(graph, args |> Map.merge(%{
                       label: label,
                       sub_menu_index: sub_menu_index,
-                      item_index: menu_item_index
+                      item_index: menu_item_index,
+                      draw_sub_menu_triangle?: false
                     }))
 
                 {new_graph, menu_item_index+1}
 
-            {:sub_menu, label, sub_menu_items}, {graph, menu_item_index} ->
-              IO.puts "rendering.. " <> label #TODO
+            {:sub_menu, label, _sub_menu_items}, {graph, menu_item_index} ->
 
+                new_graph = render_sub_menu_item(graph, args |> Map.merge(%{
+                      label: label,
+                      sub_menu_index: sub_menu_index,
+                      item_index: menu_item_index,
+                      draw_sub_menu_triangle?: true
+                    }))
 
-
-  #         {:sub_menu, label, sub_menu_items}, {graph, sub_menu_index} ->
-
-  #           button_index = [hover_index, sub_menu_index]
-  #           this_button_in_hover_chain? =
-  #             this_button_is_in_the_hover_chain?(current_hover, button_index)
-
-  #           button_frame = %{
-  #             pin: {
-  #               ((hover_index-1)*menu_item_width)+(sub_menu_depth_offset.x*sub_menu_width),
-  #               menu_bar_frame.dimensions.height+(((sub_menu_index-1)+sub_menu_depth_offset.y)*state.sub_menu.height)
-  #             },
-  #             size: {sub_menu_width, state.sub_menu.height}
-  #           }
-
-  #           new_graph = graph
-  #           |> FloatButton.add_to_graph(%{
-  #             label: label,
-  #             unique_id: button_index,
-  #             font: sub_menu_font,
-  #             frame: button_frame,
-  #             margin: @left_margin,
-  #             draw_sub_menu_triangle?: true,
-  #             hover_highlight?: this_button_in_hover_chain?
-  #           })
-
-  #           #NOTE: Here we are rendering a `:sub_menu` button, so if this button
-  #           #      is in the hover chain, we need to render that sub-menu (depth-first)
-  #           if this_button_in_hover_chain? do
-
-  #             IO.puts "RENDER THE NED MANUUUUUU"
-
-  #             #NOTE we're CLOSE! But how do we break out of the recursive loop???
-  #             extended_new_graph = do_render_sub_menu(new_graph, %{
-  #               state: state,
-  #               frame: menu_bar_frame,
-  #               theme: theme
-  #             # }, {%{x: sub_menu_depth_offset.x+1, y: sub_menu_depth_offset.y+sub_menu_index-1}, sub_menu_rest})
-  #             }, {%{x: sub_menu_depth_offset.x+1, y: sub_menu_depth_offset.y+3}, sub_menu_rest})
-
-  #             IO.puts "RE RE RE RE EXTENDDDD"
-  #             {extended_new_graph, sub_menu_index+1}
-  #           else
-  #             {new_graph, sub_menu_index+1}
-  #           end
-  #       end)
-
-
-
-              #TODO ok here we go, need to render another menu_item here & then keep going rendering the rest of the sub-menus...
-              {graph, menu_item_index+1}
+                {new_graph, menu_item_index+1}
 
           end)
 
@@ -480,6 +436,14 @@ defmodule ScenicWidgets.MenuBar do
     #   size: {sub_menu_width, state.sub_menu.height}
     # }
 
+  #           button_frame = %{
+  #             pin: {
+  #               ((hover_index-1)*menu_item_width)+(sub_menu_depth_offset.x*sub_menu_width),
+  #               menu_bar_frame.dimensions.height+(((sub_menu_index-1)+sub_menu_depth_offset.y)*state.sub_menu.height)
+  #             },
+  #             size: {sub_menu_width, state.sub_menu.height}
+  #           }
+
     # button_frame = %{
     #   pin: {
     #     ((hover_index-1)*menu_item_width),
@@ -505,6 +469,7 @@ defmodule ScenicWidgets.MenuBar do
       font: args.sub_menu_font,
       frame: menu_item_frame,
       margin: @left_margin,
+      draw_sub_menu_triangle?: args.draw_sub_menu_triangle?,
       hover_highlight?: item_unique_id == hover_index #TODO this_button_in_hover_chain?
     })    
 
@@ -535,6 +500,8 @@ defmodule ScenicWidgets.MenuBar do
     #TODO here, need to do the work, calculate the list of sub-menus o render with offsets...
     IO.inspect depth, label: "DDD"
 
+      #             # }, {%{x: sub_menu_depth_offset.x+1, y: sub_menu_depth_offset.y+sub_menu_index-1}, sub_menu_rest})
+  #             }, {%{x: sub_menu_depth_offset.x+1, y: sub_menu_depth_offset.y+3}, sub_menu_rest})
 
   #   sub_menu_to_render = case hover_item do
   #     # nil ->
