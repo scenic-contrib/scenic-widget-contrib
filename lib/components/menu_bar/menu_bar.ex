@@ -119,7 +119,7 @@ defmodule ScenicWidgets.MenuBar do
 
     {:sub_menu, _label, sub_menu} = state.menu_map |> Enum.at(top_ii - 1)
     
-    {:ok, clicked_item} = sub_menu |> fetch_item_at(rest_click_coords)
+    {:ok, clicked_item, _y_offset} = sub_menu |> fetch_item_at(rest_click_coords)
     
     #NOTE: Sub-menus may be either a normal float button, or they may be further sub-menus - we have to handle all cases here
     case clicked_item do
@@ -398,7 +398,7 @@ defmodule ScenicWidgets.MenuBar do
             stroke: {2, args.theme.border},
             translate: {
               (top_hover_index-1)*menu_item_width + (offsets.x*args.sub_menu_width),
-              args.frame.dimensions.height
+              args.frame.dimensions.height + (offsets.y*args.state.sub_menu.height)
         }) 
         #NOTE: This next line draw a "black" (or whatever color our menu bar background is)
         # over the top of the sub-menu border-box drawn above, so that instead of a completely
@@ -476,41 +476,45 @@ defmodule ScenicWidgets.MenuBar do
     |> calc_sub_menu_dropdowns()
 
     # now call the recursive part, seeding the results (a lsit of lists/menus) with the one we've already calculated
-    do_calc_sub_menu_dropdowns(args, [first_menu], hover_chain, {1, depth})
+    do_calc_sub_menu_dropdowns(args, [first_menu], hover_chain, {1, depth, _y_offset_carry = 0})
   end
 
-  defp do_calc_sub_menu_dropdowns(_args, sub_menu_list, _hover_chain, {count, depth}) when count >= depth do
+  defp do_calc_sub_menu_dropdowns(_args, sub_menu_list, _hover_chain, {count, depth, _y_offset_carry}) when count >= depth do
     sub_menu_list # base case, we've finished calculating the menus
   end
 
-  defp do_calc_sub_menu_dropdowns(args, sub_menu_list, hover_chain, {count, depth}) do
+  defp do_calc_sub_menu_dropdowns(args, sub_menu_list, hover_chain, {count, depth, y_offset_carry}) do
     
     sub_menu_id = Enum.take(hover_chain, count+1)
     Logger.debug "rendering a sub-sub menu... #{inspect sub_menu_id}"
 
-    {:ok, hover_item} = fetch_item_at(args.state.menu_map, sub_menu_id)
+    #NOTE: so the way y_offset_carry works is, we can get the
+    # y_offset for each menu, but for sub-sub menus we need to keep
+    # track of the y offset at _each_ level of the sub menus
+    {:ok, hover_item, this_y_offset} = fetch_item_at(args.state.menu_map, sub_menu_id)
+    new_y_offset = y_offset_carry+this_y_offset
 
     # check if we're hovering over a sub-menu...
     case hover_item do
       {_label, _func} ->
-        # don't add any new sub-menus...
-        do_calc_sub_menu_dropdowns(args, sub_menu_list, hover_chain, {count+1, depth})
+          # don't add any new sub-menus...
+          do_calc_sub_menu_dropdowns(args, sub_menu_list, hover_chain, {count+1, depth, new_y_offset})
       {:sub_menu, _label, new_sub_menu} ->
-          next_menu = 
-          #TODO calc real offsets somehow!!
-          #NOTE: x_offset here tells us how many "menus" to the right to render our first sub-menu, e.g. if we hover over the 3rd top level menu item, move "2 menus over"
-            [{sub_menu_id, %{x: 1, y: 0}, new_sub_menu}]
-
-          do_calc_sub_menu_dropdowns(args, sub_menu_list ++ next_menu, hover_chain, {count+1, depth})
+          #NOTE: x_offset here tells us how many "menus" to the right to
+          # render our first sub-menu, e.g. if we hover over the 3rd top
+          # level menu item, move "2 menus over". `y_offset` tells us how
+          # many levels "down" to move each menu
+          next_menu = [{sub_menu_id, %{x: count, y: new_y_offset}, new_sub_menu}]
+          do_calc_sub_menu_dropdowns(args, sub_menu_list ++ next_menu, hover_chain, {count+1, depth, new_y_offset})
     end
   end
 
   def fetch_item_at({:sub_menu, _label, sub_menu}, [x]) when is_list(sub_menu) and is_integer(x) do
-    {:ok, Enum.at(sub_menu, x-1)}
+    {:ok, Enum.at(sub_menu, x-1), x-1}
   end
 
   def fetch_item_at(sub_menu, [x]) when is_list(sub_menu) and is_integer(x) do
-    {:ok, Enum.at(sub_menu, x-1)}
+    {:ok, Enum.at(sub_menu, x-1), x-1}
   end
 
   def fetch_item_at(sub_menu, [x|rest]) when is_list(sub_menu) and is_integer(x) do
