@@ -477,7 +477,6 @@ defmodule ScenicWidgets.MenuBar do
 
     # now call the recursive part, seeding the results (a lsit of lists/menus) with the one we've already calculated
     do_calc_sub_menu_dropdowns(args, [first_menu], hover_chain, {1, depth})
-    # |> IO.inspect(label: "DROPDOWNSSS")
   end
 
   defp do_calc_sub_menu_dropdowns(_args, sub_menu_list, _hover_chain, {count, depth}) when count >= depth do
@@ -486,7 +485,7 @@ defmodule ScenicWidgets.MenuBar do
 
   defp do_calc_sub_menu_dropdowns(args, sub_menu_list, hover_chain, {count, depth}) do
     
-    sub_menu_id = Enum.take(hover_chain, depth)
+    sub_menu_id = Enum.take(hover_chain, count+1)
     Logger.debug "rendering a sub-sub menu... #{inspect sub_menu_id}"
 
     {:ok, hover_item} = fetch_item_at(args.state.menu_map, sub_menu_id)
@@ -500,7 +499,7 @@ defmodule ScenicWidgets.MenuBar do
           next_menu = 
           #TODO calc real offsets somehow!!
           #NOTE: x_offset here tells us how many "menus" to the right to render our first sub-menu, e.g. if we hover over the 3rd top level menu item, move "2 menus over"
-            [{sub_menu_id, %{x: 1, y: 0}, [{"new", &QuillEx.API.Buffer.new/0},{"new", &QuillEx.API.Buffer.new/0},{"new", &QuillEx.API.Buffer.new/0}]}]
+            [{sub_menu_id, %{x: 1, y: 0}, new_sub_menu}]
 
           do_calc_sub_menu_dropdowns(args, sub_menu_list ++ next_menu, hover_chain, {count+1, depth})
     end
