@@ -367,36 +367,31 @@ defmodule ScenicWidgets.MenuBar do
     carry_graph = graph
     |> Scenic.Primitives.group(
       fn graph ->
-        {fully_accumulated_graph, _final_index} =
+        {final_acc_graph, _final_index} =
 
-          sub_menu_to_render |> Enum.reduce({graph, 1}, fn
+          sub_menu_to_render
+          |> Enum.reduce({graph, 1}, fn item, {graph, menu_item_index} ->
 
-            {label, _func}, {graph, menu_item_index} ->
+            # items which are in turn access to further sub-menus need a little triangle drawn on them
+            {label, do_draw_sub_menu_triangle?} = case item do
+              {label, _func} ->
+                {label, false}
+              {:sub_menu, label, _sub_menu_items} ->
+                {label, true}
+            end 
 
-                new_graph = render_sub_menu_item(graph, args |> Map.merge(%{
-                      label: label,
-                      sub_menu_index: sub_menu_index,
-                      item_index: menu_item_index,
-                      draw_sub_menu_triangle?: false
-                    }))
+            new_graph = render_sub_menu_item(graph, args |> Map.merge(%{
+              label: label,
+              sub_menu_index: sub_menu_index,
+              item_index: menu_item_index,
+              draw_sub_menu_triangle?: do_draw_sub_menu_triangle?
+            }))
 
-                {new_graph, menu_item_index+1}
-
-            {:sub_menu, label, _sub_menu_items}, {graph, menu_item_index} ->
-
-                new_graph = render_sub_menu_item(graph, args |> Map.merge(%{
-                      label: label,
-                      sub_menu_index: sub_menu_index,
-                      item_index: menu_item_index,
-                      draw_sub_menu_triangle?: true
-                    }))
-
-                {new_graph, menu_item_index+1}
-
+            {new_graph, menu_item_index+1}
           end)
 
         # draw a border around the sub-menu
-        fully_accumulated_graph
+        final_acc_graph
         |> Scenic.Primitives.rect({args.sub_menu_width, num_menu_items*args.state.sub_menu.height}, stroke: {2, args.theme.border}, translate: {menu_item_width*(top_hover_index-1), args.frame.dimensions.height}) # draw the border-box
         #NOTE: This next line draw a "black" (or whatever color our menu bar background is)
         # over the top of the sub-menu border-box drawn above, so that instead of a completely
