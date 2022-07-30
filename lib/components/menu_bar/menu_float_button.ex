@@ -49,7 +49,13 @@ defmodule ScenicWidgets.MenuBar.FloatButton do
   end
 
   @impl Scenic.Component
-  def bounds(%{frame: %{pin: {top_left_x, top_left_y}, size: {width, height}}}, _opts) do
+  def bounds(%{frame: %{pin: {top_left_x, top_left_y}, size: {width, height}}} = input, opts) do
+      #NOTE: Because we use this bounds/2 function to calculate whether or
+      # not the mouse is hovering over any particular button, we can't
+      # translate entire groups of sub-menus around. We ned to explicitely
+      # draw buttons in their correct order, and not translate them around,
+      # because bounds/2 doesn't seem to work correctly with translated elements
+      #TODO talk to Boyd and see if I'm wrong about this, or maybe we can improve Scenic to work with it
     {top_left_x, top_left_y, top_left_x+width, top_left_y+height}
   end
 
@@ -104,8 +110,9 @@ defmodule ScenicWidgets.MenuBar.FloatButton do
   def handle_input({:cursor_pos, {_x, _y} = coords}, _context, scene) do
     bounds = Scenic.Graph.bounds(scene.assigns.graph)
     theme = scene.assigns.theme
-
+    
     if coords |> ScenicWidgets.Utils.inside?(bounds) do
+      #Logger.debug "Detec'd hover: #{inspect scene.assigns.state.unique_id}, bounds: #{inspect bounds}"
       GenServer.cast(ScenicWidgets.MenuBar, {:hover, scene.assigns.state.unique_id})
     end
 
