@@ -24,3 +24,5 @@ fake__contrub-*.tar
 
 # Temporary files, for example, from tests.
 /tmp/
+
+git_garbage_old
