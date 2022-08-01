@@ -3,6 +3,7 @@
 This component renders a drop-down menu bar with configurable
 menu contents.
 
+Demo video (5 minutes): https://youtu.be/k1kiCL9oMf4
 ## How to use the MenuBar component in your Scenic app
 
 This is an example of all the code required to render a MenuBar.
