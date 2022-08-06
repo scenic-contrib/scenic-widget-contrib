@@ -1,4 +1,17 @@
 defmodule ScenicWidgets.Redraw do
+  @moduledoc """
+  Simple module to assist in redrawing a simple scenic component
+
+  Drawback is that the id needs to be specified twice. Compare with `ScenicWidgets.Redraw2`
+
+  Example:
+
+      graph
+      |> ScenicWidgets.Redraw.draw(:my_text, fn _g ->
+        text = "This the some text to display"
+        {Primitive.Text, text, id: :my_text, t: {90, 150}, font_size: 10, text_align: :left}
+      end)
+  """
   alias Scenic.Graph
 
   def draw(graph, id, fun) do
@@ -13,8 +26,8 @@ defmodule ScenicWidgets.Redraw do
         fun.(graph)
 
       [_] ->
-        Graph.modify(graph, id, fn graph ->
-          fun.(graph)
+        Graph.modify(graph, id, fn graph_or_primitive ->
+          fun.(graph_or_primitive)
         end)
     end
   end
