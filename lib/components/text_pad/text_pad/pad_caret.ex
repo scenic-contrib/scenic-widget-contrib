@@ -93,7 +93,7 @@ defmodule ScenicWidgets.TextPad.PadCaret do
     {:ok, init_scene}
   end
 
-  def handle_cast({:move, 1} = msg, %{assigns: %{coords: {x_pos, y_pos} = coords}} = scene) do
+  def handle_cast({:move, 1}, %{assigns: %{coords: {x_pos, y_pos}}} = scene) do
     new_coords = {x_pos + 19, y_pos} #TODo get real char width lol
     new_graph = scene.assigns.graph
     |> Scenic.Graph.modify(:blinker, &Scenic.Primitives.update_opts(&1, translate: new_coords))

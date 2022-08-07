@@ -48,7 +48,6 @@ defmodule ScenicWidgets.MenuBar.FloatButton do
     {:ok, init_scene}
   end
 
-  @impl Scenic.Component
   def bounds(%{frame: %{pin: {top_left_x, top_left_y}, size: {width, height}}} = input, opts) do
       #NOTE: Because we use this bounds/2 function to calculate whether or
       # not the mouse is hovering over any particular button, we can't

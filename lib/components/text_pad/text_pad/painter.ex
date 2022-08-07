@@ -18,7 +18,7 @@ defmodule ScenicWidgets.TextPad.Painter do
     # TODO there's still no definitive way to calculate line height, this is just a guess...
     # line_height = (4/3)*font_size
     # line_height = (4/3)*(ascent-descent) ## MAGIC!!! See https://www.thomasphinney.com/2011/03/point-size/ - "What About the Web?" section
-    line_height = ascent - descent
+    # line_height = ascent - descent
 
     wrapped_text = FontMetrics.wrap(
                       args.text,
@@ -60,7 +60,7 @@ defmodule ScenicWidgets.TextPad.Painter do
           wrap_opts: {:wrap, :end_of_line}}} = args) do
 
     ascent = FontMetrics.ascent(args.font.size, args.font.metrics)
-    descnt = FontMetrics.descent(args.font.size, args.font.metrics)
+    # descnt = FontMetrics.descent(args.font.size, args.font.metrics)
 
     wrapped_text = FontMetrics.wrap(
                       args.text,

@@ -204,8 +204,9 @@ defmodule ScenicWidgets.MenuBar do
     {:noreply, scene}
   end
 
-  #NOTE: Put a hard-limit on menu size for now, just for safety - I doubt we will ever want/need more than 20 top menu items anyway
-  #NOTE: A list of length 1 mean's we're hoving over a top-level menu item - one within the menu bar itself
+  #NOTE: `hover_index` is a list, starting with the top-level items.
+  # e.g. hovering over the first item in the menubar would be [1], then
+  # hovering over the third sub-item beneath that menu would be [1, 3]
   def handle_cast({:hover, hover_index} = new_mode, scene) do
     Logger.debug "#{__MODULE__} changing state.mode to: #{inspect new_mode}, from: #{inspect scene.assigns.state.mode}"
 
@@ -230,7 +231,7 @@ defmodule ScenicWidgets.MenuBar do
   end
 
   def handle_cast({:click, [top_ii]}, scene) do
-    {:noreply, scene} #NOTE: do nothing when we simply click on a top menu bar
+    {:noreply, scene} # just do nothing when we simply click on a top menu bar
   end
 
   def handle_cast({:click, [top_ii|rest_click_coords]}, %{assigns: %{state: state}} = scene) do
@@ -261,26 +262,26 @@ defmodule ScenicWidgets.MenuBar do
   end
 
   def handle_cast({:cancel, cancel_mode}, %{assigns: %{state: %{mode: current_mode}}} = scene)
-      when cancel_mode == current_mode do
-    #Logger.debug("#{__MODULE__} changing state.mode to: #{inspect(new_mode)}, from: #{inspect(cancel_mode)}")
+    when cancel_mode == current_mode do
+      #Logger.debug("#{__MODULE__} changing state.mode to: #{inspect(new_mode)}, from: #{inspect(cancel_mode)}")
 
-    new_state =
-      scene.assigns.state
-      |> Map.put(:mode, :inactive)
+      new_state =
+        scene.assigns.state
+        |> Map.put(:mode, :inactive)
 
-    new_graph = render(%{
-      state: new_state,
-      frame: scene.assigns.frame,
-      theme: scene.assigns.theme,
-    })
+      new_graph = render(%{
+        state: new_state,
+        frame: scene.assigns.frame,
+        theme: scene.assigns.theme,
+      })
 
-    new_scene =
-      scene
-      |> assign(state: new_state)
-      |> assign(graph: new_graph)
-      |> push_graph(new_graph)
+      new_scene =
+        scene
+        |> assign(state: new_state)
+        |> assign(graph: new_graph)
+        |> push_graph(new_graph)
 
-    {:noreply, new_scene}
+      {:noreply, new_scene}
   end
 
   def handle_cast({:cancel, _cancel_mode}, scene) do
