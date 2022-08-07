@@ -1,8 +1,7 @@
 defmodule ScenicWidgets.TextPad.Painter do
-  @defmodule """
+  @moduledoc """
   A module to store functions which render %Scenic.Graph{}s
   """
-
 
   def render_text_pad(%{
       mode: :read_only,
@@ -13,7 +12,7 @@ defmodule ScenicWidgets.TextPad.Painter do
         wrap_opts: {:wrap, :end_of_line}}} = args) do
 
     ascent = FontMetrics.ascent(args.font.size, args.font.metrics)
-    descent = FontMetrics.descent(args.font.size, args.font.metrics)
+    # descent = FontMetrics.descent(args.font.size, args.font.metrics)
 
     # TODO there's still no definitive way to calculate line height, this is just a guess...
     # line_height = (4/3)*font_size
@@ -102,7 +101,7 @@ defmodule ScenicWidgets.TextPad.Painter do
       wrap_opts: {:wrap, :end_of_line}}} = args) do
 
     ascent = FontMetrics.ascent(args.font.size, args.font.metrics)
-    descnt = FontMetrics.descent(args.font.size, args.font.metrics)
+    # descnt = FontMetrics.descent(args.font.size, args.font.metrics)
 
     wrapped_text = FontMetrics.wrap(
       args.text,
@@ -160,7 +159,7 @@ defmodule ScenicWidgets.TextPad.Painter do
     }} = args) do
 
       ascent = FontMetrics.ascent(args.font.size, args.font.metrics)
-      descnt = FontMetrics.descent(args.font.size, args.font.metrics)
+      # descnt = FontMetrics.descent(args.font.size, args.font.metrics)
 
       text_height = 29.0 #TODO from where??
 
@@ -210,7 +209,7 @@ defmodule ScenicWidgets.TextPad.Painter do
       IO.puts "INSERT MODEEEEEEEEEEE - LEFTYYY "
 
     ascent = FontMetrics.ascent(args.font.size, args.font.metrics)
-    descnt = FontMetrics.descent(args.font.size, args.font.metrics)
+    # descnt = FontMetrics.descent(args.font.size, args.font.metrics)
 
     wrapped_text = FontMetrics.wrap(
       args.text,
@@ -256,7 +255,7 @@ defmodule ScenicWidgets.TextPad.Painter do
     )
   end
 
-  def render_text_pad(%{format_opts: unknown_format_opts} = args) do
+  def render_text_pad(%{format_opts: _unknown_format_opts} = args) do
     raise "Unrecognised TextPad format requested. #{inspect args}"
   end
 

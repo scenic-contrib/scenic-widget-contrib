@@ -24,7 +24,7 @@ defmodule ScenicWidgets.TextPad do
           mode: mode,
           format_opts: %{
             alignment: :left,
-            wrap_opts: wrap_opts, #TODO this is what I'm working on, making it line-wrap
+            wrap_opts: _wrap_opts, #TODO this is what I'm working on, making it line-wrap
             show_line_num?: show_line_num? #TODO this too
           },
           font: %{
@@ -50,7 +50,7 @@ defmodule ScenicWidgets.TextPad do
   def init(scene, args, opts) do
     Logger.debug("#{__MODULE__} initializing...")
     theme = ScenicWidgets.Utils.Theme.get_theme(opts)
-    %{ascent: ascent, descent: descent} = ToolBag.calc_ascent_descent(args.font)
+    # %{ascent: ascent, descent: descent} = ToolBag.calc_ascent_descent(args.font)
     
 
     # NOTE: This only works for one cursor, for now...
@@ -74,7 +74,7 @@ defmodule ScenicWidgets.TextPad do
     # text_height = 31.0
     # text_height = 30.0 #NOTE - got this by truncing ascent & descent -> 24-(-6)=30
     # NOTE - got this by truncing ascent & descent -> 24-(-6)=30
-    text_height = 29.0
+    # text_height = 29.0
     # mayyy = -1 * y_min + y_max
     # maxxx = -1 * x_min + x_max
     # IO.inspect(text_height, label: "textHeight")
@@ -89,7 +89,7 @@ defmodule ScenicWidgets.TextPad do
     # TODO this is something I need to be able to get *exactly*
     # line_height = text_height
 
-    {frame_width, frame_height} = args.frame.size
+    # {frame_width, frame_height} = args.frame.size
 
     init_graph = Painter.render_text_pad(args |> Map.merge(%{theme: theme}))
 
@@ -120,7 +120,7 @@ defmodule ScenicWidgets.TextPad do
   def handle_input(input, _context, scene) when input in @valid_text_input_characters do
     Logger.debug "#{__MODULE__} recv'd input: #{inspect input}"
 
-    new_text = scene.assigns.text <> key2string(input)
+    # new_text = scene.assigns.text <> key2string(input)
     # send_parent_event(scene, {:value_changed, scene.assigns.id, new_text})
     # cast_children(scene, {:move, 1}) # update the cursor...
 

@@ -48,7 +48,7 @@ defmodule ScenicWidgets.MenuBar.FloatButton do
     {:ok, init_scene}
   end
 
-  def bounds(%{frame: %{pin: {top_left_x, top_left_y}, size: {width, height}}} = input, opts) do
+  def bounds(%{frame: %{pin: {top_left_x, top_left_y}, size: {width, height}}}, _opts) do
       #NOTE: Because we use this bounds/2 function to calculate whether or
       # not the mouse is hovering over any particular button, we can't
       # translate entire groups of sub-menus around. We ned to explicitely
@@ -108,7 +108,7 @@ defmodule ScenicWidgets.MenuBar.FloatButton do
   # TODO accept clicks, send msg bck up to menu bar??
   def handle_input({:cursor_pos, {_x, _y} = coords}, _context, scene) do
     bounds = Scenic.Graph.bounds(scene.assigns.graph)
-    theme = scene.assigns.theme
+    # theme = scene.assigns.theme
     
     if coords |> ScenicWidgets.Utils.inside?(bounds) do
       #Logger.debug "Detec'd hover: #{inspect scene.assigns.state.unique_id}, bounds: #{inspect bounds}"

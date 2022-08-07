@@ -52,16 +52,6 @@ defmodule ScenicWidgets.Core.Structs.Frame do
     }
   end
 
-  def new(%Scenic.ViewPort{size: {w, h}}, menubar_height: mh) do
-    %__MODULE__{
-      pin: {0, mh},
-      top_left: Coordinates.new(x: 0, y: mh),
-      size: {w, h-mh},
-      dimensions: Dimensions.new(width: w, height: h-mh)
-    }
-  end
-
-
   def new(size: {w, h}) do
     new(pin: {0, 0}, size: {w, h})
   end
@@ -82,6 +72,15 @@ defmodule ScenicWidgets.Core.Structs.Frame do
 
   def new(top_left: top_left, dimensions: size) do
     new(pin: top_left, size: size)
+  end
+
+  def new(%Scenic.ViewPort{size: {w, h}}, menubar_height: mh) do
+    %__MODULE__{
+      pin: {0, mh},
+      top_left: Coordinates.new(x: 0, y: mh),
+      size: {w, h-mh},
+      dimensions: Dimensions.new(width: w, height: h-mh)
+    }
   end
 
   def center(%__MODULE__{top_left: c, dimensions: d}) do

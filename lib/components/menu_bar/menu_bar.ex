@@ -207,7 +207,7 @@ defmodule ScenicWidgets.MenuBar do
   #NOTE: `hover_index` is a list, starting with the top-level items.
   # e.g. hovering over the first item in the menubar would be [1], then
   # hovering over the third sub-item beneath that menu would be [1, 3]
-  def handle_cast({:hover, hover_index} = new_mode, scene) do
+  def handle_cast({:hover, _hover_index} = new_mode, scene) do
     Logger.debug "#{__MODULE__} changing state.mode to: #{inspect new_mode}, from: #{inspect scene.assigns.state.mode}"
 
     new_state =
@@ -230,7 +230,7 @@ defmodule ScenicWidgets.MenuBar do
     {:noreply, new_scene}
   end
 
-  def handle_cast({:click, [top_ii]}, scene) do
+  def handle_cast({:click, [_top_ii]}, scene) do
     {:noreply, scene} # just do nothing when we simply click on a top menu bar
   end
 
@@ -350,12 +350,12 @@ defmodule ScenicWidgets.MenuBar do
     {:noreply, scene}
   end
 
-  def handle_input({:key, {key, _dont_care, _dont_care_either}}, _context, scene) do
+  def handle_input({:key, {_key, _dont_care, _dont_care_either}}, _context, scene) do
     #Logger.debug("#{__MODULE__} ignoring key: #{inspect(key)}")
     {:noreply, scene}
   end
 
-  def render(%{state: state, frame: frame, theme: theme} = args) do
+  def render(%{state: state} = args) do
 
     # this list contains all the sub-menu dropdowns we intend to recursively render
     sub_menu_dropdowns = calc_sub_menu_dropdowns(args)
@@ -414,7 +414,7 @@ defmodule ScenicWidgets.MenuBar do
   defp do_render_main_menu_bar(
     graph,
     state = %{mode: mode, item_width: {:fixed, menu_width}},
-    frame = %{size: {width, height}},
+    frame = %{size: {_width, height}},
     theme,
     [{label, item_num}|rest_menu_map]
   ) do
@@ -425,7 +425,7 @@ defmodule ScenicWidgets.MenuBar do
             false
           {:hover, [x]} ->
             x == item_num # test if the first item in the hover-chain is this top-level menu item
-          {:hover, [x|_rest]} ->
+          {:hover, [_x|_rest]} ->
             # if we want to highlight the top menu item when we hover over a sub-menu,
             # we would set this to true
             false
@@ -453,7 +453,7 @@ defmodule ScenicWidgets.MenuBar do
   defp render_sub_menu_dropdowns(graph, args, sub_menu_dropdowns)
     when is_list(sub_menu_dropdowns) and length(sub_menu_dropdowns) >= 1 do
 
-      {_w, menu_bar_height} = args.frame.size
+      # {_w, menu_bar_height} = args.frame.size
       
       num_top_items = Enum.count(args.state.menu_map) # count how many top-level menu items
       {:fixed, menu_item_width} = args.state.item_width
@@ -586,7 +586,7 @@ defmodule ScenicWidgets.MenuBar do
     [{_sub_menu_id = [top_hover_index], _offsets = %{x: 0, y: 0}, top_lvl_sub_menu}]
   end
 
-  defp calc_sub_menu_dropdowns(%{state: %{mode: {:hover, hover_chain = [top_hover_index|_rest]}, menu_map: menu_map}} = args) do
+  defp calc_sub_menu_dropdowns(%{state: %{mode: {:hover, hover_chain = [top_hover_index|_rest]}}} = args) do
     depth = Enum.count(hover_chain)
 
     # get the first menu in the chain by spoofing the call, as if we were simply hovering over one of the top menu-buttons
