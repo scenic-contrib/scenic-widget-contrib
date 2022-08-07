@@ -2,7 +2,7 @@ defmodule ScenicWidgets.TextPad do
   use Scenic.Component
   require Logger
   use ScenicWidgets.ScenicEventsDefinitions
-  alias ScenicWidgets.TextPad.{ToolBag, Painter}
+  alias ScenicWidgets.TextPad.Painter
 
   #NOTE ok so - there's gonna be no choice, I better just try it - make each
   # line it's own (possibly dumb?) component.
