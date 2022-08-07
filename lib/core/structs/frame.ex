@@ -78,8 +78,8 @@ defmodule ScenicWidgets.Core.Structs.Frame do
     %__MODULE__{
       pin: {0, mh},
       top_left: Coordinates.new(x: 0, y: mh),
-      size: {w, h-mh},
-      dimensions: Dimensions.new(width: w, height: h-mh)
+      size: {w, h - mh},
+      dimensions: Dimensions.new(width: w, height: h - mh)
     }
   end
 

@@ -7,7 +7,10 @@ defmodule ScenicWidgets.MenuBar.FloatButton do
   just customized a little bit.
   """
 
-  def validate(%{label: _l, unique_id: _n, frame: _f, margin: _m, font: _fs, hover_highlight?: _hh} = data) do
+  def validate(
+        %{label: _l, unique_id: _n, frame: _f, margin: _m, font: _fs, hover_highlight?: _hh} =
+          data
+      ) do
     # Logger.debug "#{__MODULE__} accepted params: #{inspect data}"
     if Map.get(data, :draw_sub_menu_triangle?, false) do
       {:ok, data}
@@ -49,56 +52,59 @@ defmodule ScenicWidgets.MenuBar.FloatButton do
   end
 
   def bounds(%{frame: %{pin: {top_left_x, top_left_y}, size: {width, height}}}, _opts) do
-      #NOTE: Because we use this bounds/2 function to calculate whether or
-      # not the mouse is hovering over any particular button, we can't
-      # translate entire groups of sub-menus around. We ned to explicitely
-      # draw buttons in their correct order, and not translate them around,
-      # because bounds/2 doesn't seem to work correctly with translated elements
-      #TODO talk to Boyd and see if I'm wrong about this, or maybe we can improve Scenic to work with it
-    {top_left_x, top_left_y, top_left_x+width, top_left_y+height}
+    # NOTE: Because we use this bounds/2 function to calculate whether or
+    # not the mouse is hovering over any particular button, we can't
+    # translate entire groups of sub-menus around. We ned to explicitely
+    # draw buttons in their correct order, and not translate them around,
+    # because bounds/2 doesn't seem to work correctly with translated elements
+    # TODO talk to Boyd and see if I'm wrong about this, or maybe we can improve Scenic to work with it
+    {top_left_x, top_left_y, top_left_x + width, top_left_y + height}
   end
 
   def render(args, theme) do
     {width, height} = args.frame.size
 
     # https://github.com/boydm/scenic/blob/master/lib/scenic/component/button.ex#L200
-    vpos = height/2 + args.font.ascent/2 + args.font.descent/3
+    vpos = height / 2 + args.font.ascent / 2 + args.font.descent / 3
 
-    new_graph = Scenic.Graph.build()
-    |> Scenic.Primitives.group(
-      fn graph ->
-        graph
-        |> Scenic.Primitives.rect(args.frame.size,
-          id: :background,
-          fill: (if args.hover_highlight?, do: theme.highlight, else: theme.active)
-        )
-        |> Scenic.Primitives.text(args.label,
-          id: :label,
-          font: :ibm_plex_mono,
-          font_size: args.font.size,
-          translate: {args.margin, vpos},
-          fill: theme.text
-        )
-      end,
-      id: {:float_button, args.unique_id},
-      translate: args.frame.pin
-    )
+    new_graph =
+      Scenic.Graph.build()
+      |> Scenic.Primitives.group(
+        fn graph ->
+          graph
+          |> Scenic.Primitives.rect(args.frame.size,
+            id: :background,
+            fill: if(args.hover_highlight?, do: theme.highlight, else: theme.active)
+          )
+          |> Scenic.Primitives.text(args.label,
+            id: :label,
+            font: :ibm_plex_mono,
+            font_size: args.font.size,
+            translate: {args.margin, vpos},
+            fill: theme.text
+          )
+        end,
+        id: {:float_button, args.unique_id},
+        translate: args.frame.pin
+      )
 
     if args.draw_sub_menu_triangle? do
-      {top_left_x, top_left_y} = args.frame.pin #TODO dunno why we need to do this, why cant we go args.frame.top_left_x?
+      # TODO dunno why we need to do this, why cant we go args.frame.top_left_x?
+      {top_left_x, top_left_y} = args.frame.pin
 
-      pop_out_icon_height = 0.6*height
+      pop_out_icon_height = 0.6 * height
+
       pop_out_icon_coords = %{
-        x: top_left_x+(0.87*width),
-        y: top_left_y+(height-pop_out_icon_height)/2
+        x: top_left_x + 0.87 * width,
+        y: top_left_y + (height - pop_out_icon_height) / 2
       }
-  
+
       # draw the sub-menu & sigils over the top of the carry_graph
       new_graph
       |> ScenicWidgets.Utils.Shapes.right_pointing_triangle(%{
-          top_left: pop_out_icon_coords,
-          height: pop_out_icon_height,
-          color: theme.border
+        top_left: pop_out_icon_coords,
+        height: pop_out_icon_height,
+        color: theme.border
       })
     else
       new_graph
@@ -109,9 +115,9 @@ defmodule ScenicWidgets.MenuBar.FloatButton do
   def handle_input({:cursor_pos, {_x, _y} = coords}, _context, scene) do
     bounds = Scenic.Graph.bounds(scene.assigns.graph)
     # theme = scene.assigns.theme
-    
+
     if coords |> ScenicWidgets.Utils.inside?(bounds) do
-      #Logger.debug "Detec'd hover: #{inspect scene.assigns.state.unique_id}, bounds: #{inspect bounds}"
+      # Logger.debug "Detec'd hover: #{inspect scene.assigns.state.unique_id}, bounds: #{inspect bounds}"
       GenServer.cast(ScenicWidgets.MenuBar, {:hover, scene.assigns.state.unique_id})
     end
 

@@ -40,9 +40,9 @@ defmodule ScenicWidgets.TextPad.PadCaret do
 
   # def validate(%{coords: num} = data) when is_integer(num) and num >= 0 do
   def validate(%{coords: _coords, height: _h} = data) do
-    validate(data |> Map.merge(%{mode: :cursor})) # vim-insert mode by default
+    # vim-insert mode by default
+    validate(data |> Map.merge(%{mode: :cursor}))
   end
-
 
   def init(scene, args, opts) do
     Logger.debug("#{__MODULE__} initializing...")
@@ -94,14 +94,18 @@ defmodule ScenicWidgets.TextPad.PadCaret do
   end
 
   def handle_cast({:move, 1}, %{assigns: %{coords: {x_pos, y_pos}}} = scene) do
-    new_coords = {x_pos + 19, y_pos} #TODo get real char width lol
-    new_graph = scene.assigns.graph
-    |> Scenic.Graph.modify(:blinker, &Scenic.Primitives.update_opts(&1, translate: new_coords))
+    # TODo get real char width lol
+    new_coords = {x_pos + 19, y_pos}
 
-    new_scene = scene
-    |> assign(graph: new_graph)
-    |> assign(coords: new_coords)
-    |> push_graph(new_graph)
+    new_graph =
+      scene.assigns.graph
+      |> Scenic.Graph.modify(:blinker, &Scenic.Primitives.update_opts(&1, translate: new_coords))
+
+    new_scene =
+      scene
+      |> assign(graph: new_graph)
+      |> assign(coords: new_coords)
+      |> push_graph(new_graph)
 
     {:noreply, new_scene}
   end

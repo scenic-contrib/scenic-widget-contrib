@@ -4,17 +4,15 @@ defmodule ScenicWidgets.TextPad do
   use ScenicWidgets.ScenicEventsDefinitions
   alias ScenicWidgets.TextPad.Painter
 
-  #NOTE ok so - there's gonna be no choice, I better just try it - make each
+  # NOTE ok so - there's gonna be no choice, I better just try it - make each
   # line it's own (possibly dumb?) component.
 
+  # Scroll wrapping - for this, I can go ahead with existing text (which wraps),
+  # but treat it as larger than another container. However, ultimately
+  # I want to be able to disable the scroll-wrapping talked about above,
+  # so that I can render  continuous line, & potentially scroll it
 
-      # Scroll wrapping - for this, I can go ahead with existing text (which wraps),
-    # but treat it as larger than another container. However, ultimately
-    # I want to be able to disable the scroll-wrapping talked about above,
-    # so that I can render  continuous line, & potentially scroll it
-
-    
-    # Other unimplemented cases: Max 1 line height (e.g. KommandBuffer)
+  # Other unimplemented cases: Max 1 line height (e.g. KommandBuffer)
 
   def validate(
         %{
@@ -24,8 +22,10 @@ defmodule ScenicWidgets.TextPad do
           mode: mode,
           format_opts: %{
             alignment: :left,
-            wrap_opts: _wrap_opts, #TODO this is what I'm working on, making it line-wrap
-            show_line_num?: show_line_num? #TODO this too
+            # TODO this is what I'm working on, making it line-wrap
+            wrap_opts: _wrap_opts,
+            # TODO this too
+            show_line_num?: show_line_num?
           },
           font: %{
             size: _size,
@@ -33,25 +33,25 @@ defmodule ScenicWidgets.TextPad do
           }
         } = args
       )
-      when is_bitstring(text)
-      and mode in [:read_only, :edit, {:vim, :normal}, {:vim, :insert}, {:vim, :visual}]
-      and is_boolean(show_line_num?)
-    do
-      Logger.debug("#{__MODULE__} accepted args: #{inspect(args)}")
+      when is_bitstring(text) and
+             mode in [:read_only, :edit, {:vim, :normal}, {:vim, :insert}, {:vim, :visual}] and
+             is_boolean(show_line_num?) do
+    Logger.debug("#{__MODULE__} accepted args: #{inspect(args)}")
 
-      final_args = args
+    final_args =
+      args
       # |> Map.merge(%{cursors: [{1, %{col: 1, line: 1}}]})
-      |> Map.merge(%{cursor_pos: args |> Map.get(:cursor, 0)}) # default to zero
+      # default to zero
+      |> Map.merge(%{cursor_pos: args |> Map.get(:cursor, 0)})
       |> Map.merge(%{margin: %{left: 5, top: 0, bottom: 0, right: 5}})
 
-      {:ok, final_args}
+    {:ok, final_args}
   end
 
   def init(scene, args, opts) do
     Logger.debug("#{__MODULE__} initializing...")
     theme = ScenicWidgets.Utils.Theme.get_theme(opts)
     # %{ascent: ascent, descent: descent} = ToolBag.calc_ascent_descent(args.font)
-    
 
     # NOTE: This only works for one cursor, for now...
     # [{1, %{col: _col, line: line}}] = args.cursors
@@ -66,9 +66,7 @@ defmodule ScenicWidgets.TextPad do
     #       and since I'm using a monospce font, that means thats 1 char width. It's a hack but...
     #       even so, I cant get the line hgiehght - maybe FontMetrics is lcking
 
-    
     # {x_min, y_min, x_max, y_max} = FontMetrics.max_box(args.font.size, args.font.metrics)
-
 
     # text_height = ascent-descnt
     # text_height = 31.0
@@ -109,16 +107,14 @@ defmodule ScenicWidgets.TextPad do
     {:ok, init_scene}
   end
 
-  
-
-  #TODO just forward all input up to StoryRiver, which wil then forward it all over to the event bus (InputListener)
+  # TODO just forward all input up to StoryRiver, which wil then forward it all over to the event bus (InputListener)
   def handle_input(input, _context, scene) when input in @arrow_keys do
-    IO.puts "ARROW"
+    IO.puts("ARROW")
     {:noreply, scene}
   end
 
   def handle_input(input, _context, scene) when input in @valid_text_input_characters do
-    Logger.debug "#{__MODULE__} recv'd input: #{inspect input}"
+    Logger.debug("#{__MODULE__} recv'd input: #{inspect(input)}")
 
     # new_text = scene.assigns.text <> key2string(input)
     # send_parent_event(scene, {:value_changed, scene.assigns.id, new_text})
@@ -128,12 +124,10 @@ defmodule ScenicWidgets.TextPad do
   end
 
   def handle_input(input, _context, scene) do
-    Logger.debug "#{__MODULE__} ignoring some input: #{inspect input}"
+    Logger.debug("#{__MODULE__} ignoring some input: #{inspect(input)}")
     {:noreply, scene}
   end
-
 end
-
 
 # defmodule Scenic.Component.Input.TextField do
 #     @moduledoc """
