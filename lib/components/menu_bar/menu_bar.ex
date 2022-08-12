@@ -2,7 +2,6 @@ defmodule ScenicWidgets.MenuBar do
   use Scenic.Component
   require Logger
   alias ScenicWidgets.MenuBar.FloatButton
-  alias ScenicWidgets.Core.Structs.Frame
   use ScenicWidgets.ScenicEventsDefinitions
   # NOTE: This is an example of a valid menu-map
   # [
