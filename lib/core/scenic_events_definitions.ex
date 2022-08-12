@@ -192,7 +192,7 @@ defmodule ScenicWidgets.ScenicEventsDefinitions do
       @period {:key, {:key_dot, @key_pressed, []}}
       @bang {:key, {:key_1, @key_pressed, [:shift]}}
       @question_mark {:key, {:key_slash, @key_pressed, [:shift]}}
-      @at_sign {:key, {:key_2, @key_pressed, [:shift]}}
+      @asperand {:key, {:key_2, @key_pressed, [:shift]}}
       @colon {:key, {:key_semicolon, @key_pressed, [:shift]}}
       @comma {:key, {:key_comma, @key_pressed, []}}
       @quote_character {:key, {:key_apostrophe, @key_pressed, [:shift]}}
@@ -220,7 +220,7 @@ defmodule ScenicWidgets.ScenicEventsDefinitions do
         @right_parenthesis,
         @left_brace,
         @right_brace,
-        @at_sign,
+        @asperand,
         @minus_sign,
         @apostrophe
       ]
@@ -306,13 +306,12 @@ defmodule ScenicWidgets.ScenicEventsDefinitions do
       def key2string(@uppercase_Y), do: "Y"
       def key2string(@uppercase_Z), do: "Z"
 
-      # def key2string(@escape), do: "escape"
       def key2string(@space_bar), do: " "
       def key2string(@enter_key), do: "\n"
 
       def key2string(@period), do: "."
       def key2string(@bang), do: "!"
-      def key2string(@at_sign), do: "@"
+      def key2string(@asperand), do: "@"
       def key2string(@question_mark), do: "?"
       def key2string(@colon), do: ":"
       def key2string(@comma), do: ","
