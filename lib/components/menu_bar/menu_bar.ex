@@ -16,7 +16,6 @@ defmodule ScenicWidgets.MenuBar do
   # how far we indent the first menu item
   @left_margin 15
   @default_font :roboto
-  @default_height 60
   @default_item_width 180
   @default_top_line_font_size 36
   @default_sub_menu_height 40

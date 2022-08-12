@@ -8,8 +8,14 @@ defmodule ScenicWidgets.MenuBar.FloatButton do
   """
 
   def validate(
-        %{label: _l, unique_id: _n, frame: _f, margin: _m, font: %{name: _fn, size: _fns} = _fs, hover_highlight?: _hh} =
-          data
+        %{
+          label: _l,
+          unique_id: _n,
+          frame: _f,
+          margin: _m,
+          font: %{name: _fn, size: _fns} = _fs,
+          hover_highlight?: _hh
+        } = data
       ) do
     # Logger.debug "#{__MODULE__} accepted params: #{inspect data}"
     if Map.get(data, :draw_sub_menu_triangle?, false) do
@@ -58,7 +64,11 @@ defmodule ScenicWidgets.MenuBar.FloatButton do
     # draw buttons in their correct order, and not translate them around,
     # because bounds/2 doesn't seem to work correctly with translated elements
     # TODO talk to Boyd and see if I'm wrong about this, or maybe we can improve Scenic to work with it
-    {top_left_x, top_left_y, top_left_x + width, top_left_y + height}
+    left = top_left_x
+    right = top_left_x + width
+    top = top_left_y
+    bottom = top_left_y + height
+    {left, top, right, bottom}
   end
 
   def render(args, theme) do
@@ -101,7 +111,7 @@ defmodule ScenicWidgets.MenuBar.FloatButton do
 
       # draw the sub-menu & sigils over the top of the carry_graph
       new_graph
-      |> ScenicWidgets.Utils.Shapes.right_pointing_triangle(%{
+      |> right_pointing_triangle(%{
         top_left: pop_out_icon_coords,
         height: pop_out_icon_height,
         color: theme.border
@@ -115,6 +125,8 @@ defmodule ScenicWidgets.MenuBar.FloatButton do
   def handle_input({:cursor_pos, {_x, _y} = coords}, _context, scene) do
     bounds = Scenic.Graph.bounds(scene.assigns.graph)
     # theme = scene.assigns.theme
+
+    IO.inspect(bounds, label: "BBB, #{inspect(scene.assigns.state.unique_id)}")
 
     if coords |> ScenicWidgets.Utils.inside?(bounds) do
       # Logger.debug "Detec'd hover: #{inspect scene.assigns.state.unique_id}, bounds: #{inspect bounds}"
@@ -163,5 +175,32 @@ defmodule ScenicWidgets.MenuBar.FloatButton do
   def handle_input(_input, _context, scene) do
     # Logger.debug "#{__MODULE__} ignoring input: #{inspect input}..."
     {:noreply, scene}
+  end
+
+  def right_pointing_triangle(graph, %{
+        top_left: %{x: _x, y: _y} = pin,
+        height: height,
+        color: color
+      }) do
+    # NOTE: How Scenic draws triangles
+    #      --------------------------
+    #      Scenic uses 3 points to draw a triangle, which look like this:
+    #
+    #           x - point1 (This is the `pin`)
+    #           |\
+    #           | \ x - point2 (apex of triangle)
+    #           | /
+    #           |/
+    #           x - point3
+    #
+    #       remember that Scenic draws from the top-left, so adding
+    #       to a value means going down the screen.
+    point1 = {pin.x, pin.y}
+    # 0.866 for an equilateral triangle, but I dunno this just feels right
+    point2 = {pin.x + 0.72 * height, pin.y + height / 2}
+    point3 = {pin.x, pin.y + height}
+
+    graph
+    |> Scenic.Primitives.triangle({point1, point2, point3}, fill: color)
   end
 end
