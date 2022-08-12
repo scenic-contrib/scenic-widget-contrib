@@ -2,6 +2,7 @@ defmodule ScenicWidgets.MenuBar do
   use Scenic.Component
   require Logger
   alias ScenicWidgets.MenuBar.FloatButton
+  alias ScenicWidgets.Core.Structs.Frame
   use ScenicWidgets.ScenicEventsDefinitions
   # NOTE: This is an example of a valid menu-map
   # [
@@ -15,150 +16,77 @@ defmodule ScenicWidgets.MenuBar do
 
   # how far we indent the first menu item
   @left_margin 15
+  @default_font :roboto
+  @default_height 60
+  @default_item_width 180
+  @default_top_line_font_size 36
+  @default_sub_menu_height 40
+  @default_sub_menu_font_size 22
 
-  @doc """
-  Return a list of all the zero-arity functions in a module, in
-  the correctly formatted list of `{label, function}` tuples for
-  injecting into a GUI.Component.MenuBar menu-map.
-  """
-  def zero_arity_functions("Elixir." <> module_name) when is_bitstring(module_name) do
-    # NOTE: Because we automatically add Elixir. to the start of the module
-    # (which we need to do in order to get `String.to_atom` to convert it
-    # cleanly into a proper module name), we need to also strip it out
-    # first if it already exists to cover all cases :facepalm:
-    zero_arity_functions(module_name)
-  end
+  defdelegate zero_arity_functions(m), to: ScenicWidgets.MenuBar.MenuMapMaker
+  defdelegate modules_and_zero_arity_functions(m), to: ScenicWidgets.MenuBar.MenuMapMaker
 
-  def zero_arity_functions(module_name) when is_bitstring(module_name) do
-    ("Elixir." <> module_name)
-    |> String.to_atom()
-    |> zero_arity_functions()
-  end
-
-  def zero_arity_functions(module) when is_atom(module) do
-    module.__info__(:functions)
-    |> Enum.filter(fn {_exported_fn, arity} -> arity == 0 end)
-    |> Enum.map(fn {exported_fn, _arity = 0} -> exported_fn end)
-    |> Enum.map(fn exported_fn ->
-      {Atom.to_string(exported_fn),
-       fn ->
-         # NOTE: When we execute one of these zero-arity functions,
-         # it happens within the context/process of the MenuBar.
-         # This means that any zero-arity function which is designed
-         # to return an item (usually for use in the CLI) will return
-         # that item, and it will get swallowed inside this context,
-         # effectively achieving nothing. I put this IO.inspect here
-         # so that we can at least see the results on the CLI even it
-         # we can't use them.
-         apply(module, exported_fn, [])
-         |> IO.inspect(label: "#{Atom.to_string(exported_fn)}")
-       end}
-    end)
-  end
-
-  @doc """
-  Construct a tree of zero-arity functions grouped by their modules,
-  including constructing nested sub-menus based on a typical namespacing
-  convention for Elixir modules. Returns a correctly formatted list of
-  sub-menus (in the form `{:sub_menu, label, menu}`) and zero-arity
-  functions (in the form `{label, function}`) for building sub-menu trees
-  that can be injected into a GUI.Component.MenuBar menu-map.
-
-  To filter from the list of all possible modules, we have to give it
-  a string which is what all the modules in the sub-menu tree start with,
-  e.g. "Elixir.Flamelex.API"
-
-  Note that this function only works with Elixir modules, not Erlang ones.
-  """
-  def modules_and_zero_arity_functions(modules_start_with)
-      when is_bitstring(modules_start_with) do
-    split_base_module = Module.split(modules_start_with)
-    base_depth = Enum.count(split_base_module)
-
-    modules =
-      :code.all_available()
-      |> Enum.map(fn {module, _filename, _loaded?} -> module end)
-      |> Enum.filter(fn module -> String.starts_with?("#{module}", modules_start_with) end)
-      |> Enum.map(&to_string(&1))
-
-    split_modules =
-      modules
-      |> Enum.map(&Module.split(&1))
-
-    # get all the sub-menus in the level below this one
-    {_module_depth, top_lvl_sub_menu} =
-      split_modules
-      |> Enum.group_by(&Enum.count(&1))
-      |> Enum.find(fn {depth, _sub_menu} -> depth == base_depth + 1 end)
-
-    sub_menu_tree_result =
-      top_lvl_sub_menu
-      |> Enum.map(&calc_lower_sub_menu(&1, split_modules))
-      |> Enum.reject(&(&1 == :no_children))
-
-    # NOTE: we check this cause we don't want to call `zero_arity_functions(modules_start_with)`
-    # if the module doesn't exist, or it will crash!
-    if Enum.member?(modules, modules_start_with) do
-      sub_menu_tree_result ++ zero_arity_functions(modules_start_with)
-    else
-      # no need to get extra functions from the base module, just return the sub-menus
-      sub_menu_tree_result
-    end
-  end
-
-  def calc_lower_sub_menu(top_item, modules) do
-    next_depth = Enum.count(top_item) + 1
-    # convert a list like ["Module", "By", "Luke"] to a string, "Module.By.Luke"
-    module_name = Enum.reduce(top_item, fn x, acc -> acc <> "." <> x end)
-
-    # NOTE: It's this step which causes the recusrion to bottom-out.
-    # the increasing size of the sub-modules means we eventually
-    # get an empty list when we filter on items which are a level deeper
-    sub_modules =
-      modules
-      |> Enum.filter(&(Enum.count(&1) == next_depth))
-      |> Enum.filter(fn l -> List.starts_with?(l, top_item) end)
-
-    this_sub_menu =
-      Enum.map(sub_modules, fn sub_mod ->
-        calc_lower_sub_menu(sub_mod, modules)
-      end)
-      |> Enum.reject(&(&1 == :no_children))
-
-    these_zero_arity_functions = zero_arity_functions(module_name)
-
-    if this_sub_menu == [] and these_zero_arity_functions == [] do
-      :no_children
-    else
-      label = List.last(top_item)
-      {:sub_menu, label, this_sub_menu ++ these_zero_arity_functions}
-    end
-  end
 
   def validate(
         %{
           # The %Frame{} struct describing the rectangular size & placement of the component
           frame: %ScenicWidgets.Core.Structs.Frame{} = _f,
           # A list containing the contents of the Menu, and what functions to call if that item gets clicked on
-          menu_map: _map,
-          # `{:fixed, x}` which means each menu item is a fixed width
-          item_width: {:fixed, _w},
-          font: %{
-            # A %FontMetrics{} struct for this font
-            metrics: _fm,
-            # The font-size of the main menubar options
-            size: _size
-          },
-          sub_menu: %{
-            # The height of the sub-menus (as opposed to the main menu bar)
-            height: _h,
-            # The size of the sub-menu font
-            font_size: _sub_menu_font_size
-          }
-        } = data
+          menu_map: _menu_map
+        } = init_data
       ) do
     # Logger.debug "#{__MODULE__} accepted params: #{inspect data}"
-    {:ok, data}
+
+    # init_frame =
+    #   case Map.get(init_data, :frame, :not_found) do
+    #     f = %Frame{} ->
+    #       f
+    #     :not_found ->
+    #       vp_width = 180
+    #       Frame.new(
+    #         pin: {0, 0},
+    #         size: {vp_width, @default_height}
+    #       )
+    #   end
+
+    init_item_width =
+      case Map.get(init_data, :item_width, :not_found) do
+        {:fixed, _w} = provided_item_width ->
+          provided_item_width
+        :not_found ->
+          {:fixed, @default_item_width}
+      end
+    
+    init_font_details =
+      case Map.get(init_data, :font, :not_found) do
+        %{name: font_name, metrics: %FontMetrics{} =_fm, size: font_size} = provided_details when is_atom(font_name) and is_integer(font_size) ->
+          provided_details
+        %{name: font_name, size: custom_font_size} when is_atom(font_name) and is_integer(custom_font_size) ->
+          {:ok, {_type, custom_font_metrics}} = Scenic.Assets.Static.meta(font_name)
+          %{name: font_name, metrics: custom_font_metrics, size: custom_font_size}
+        :not_found ->
+          {:ok, {_type, default_font_metrics}} = Scenic.Assets.Static.meta(@default_font)
+          %{name: @default_font, metrics: default_font_metrics, size: @default_top_line_font_size}
+        font_name when is_atom(font_name) ->
+          {:ok, {_type, custom_font_metrics}} = Scenic.Assets.Static.meta(font_name)
+          %{name: font_name, metrics: custom_font_metrics, size: @default_top_line_font_size}
+      end
+
+    init_sub_menu_opts =
+      case Map.get(init_data, :sub_menu, :not_found) do
+        %{height: provided_height, font_size: font_size} = provided_sub_menu_opts when is_integer(provided_height) and is_integer(font_size) ->
+          provided_sub_menu_opts
+        :not_found ->
+          %{height: @default_sub_menu_height, font_size: @default_sub_menu_font_size}
+      end
+    
+    final_data = init_data |> Map.merge(%{
+      item_width: init_item_width,
+      font: init_font_details,
+      sub_menu: init_sub_menu_opts
+    })
+
+    {:ok, final_data}
   end
 
   def init(scene, args, opts) do
@@ -209,9 +137,9 @@ defmodule ScenicWidgets.MenuBar do
   # e.g. hovering over the first item in the menubar would be [1], then
   # hovering over the third sub-item beneath that menu would be [1, 3]
   def handle_cast({:hover, _hover_index} = new_mode, scene) do
-    Logger.debug(
-      "#{__MODULE__} changing state.mode to: #{inspect(new_mode)}, from: #{inspect(scene.assigns.state.mode)}"
-    )
+    # Logger.debug(
+    #   "#{__MODULE__} changing state.mode to: #{inspect(new_mode)}, from: #{inspect(scene.assigns.state.mode)}"
+    # )
 
     new_state =
       scene.assigns.state
@@ -363,6 +291,7 @@ defmodule ScenicWidgets.MenuBar do
     sub_menu_dropdowns = calc_sub_menu_dropdowns(args)
 
     sub_menu_font = %{
+      name: state.font.name,
       size: state.sub_menu.font_size,
       ascent: FontMetrics.ascent(state.sub_menu.font_size, state.font.metrics),
       descent: FontMetrics.descent(state.sub_menu.font_size, state.font.metrics),
@@ -587,8 +516,9 @@ defmodule ScenicWidgets.MenuBar do
     })
   end
 
-  defp calc_font_data(%{size: size, metrics: metrics}) do
+  defp calc_font_data(%{name: name, size: size, metrics: metrics}) do
     %{
+      name: name,
       size: size,
       ascent: FontMetrics.ascent(size, metrics),
       descent: FontMetrics.descent(size, metrics),
@@ -641,7 +571,7 @@ defmodule ScenicWidgets.MenuBar do
          {count, depth, y_offset_carry}
        ) do
     sub_menu_id = Enum.take(hover_chain, count + 1)
-    Logger.debug("rendering a sub-sub menu... #{inspect(sub_menu_id)}")
+    # Logger.debug("rendering a sub-sub menu... #{inspect(sub_menu_id)}")
 
     # NOTE: so the way y_offset_carry works is, we can get the
     # y_offset for each menu, but for sub-sub menus we need to keep

@@ -8,7 +8,7 @@ defmodule ScenicWidgets.MenuBar.FloatButton do
   """
 
   def validate(
-        %{label: _l, unique_id: _n, frame: _f, margin: _m, font: _fs, hover_highlight?: _hh} =
+        %{label: _l, unique_id: _n, frame: _f, margin: _m, font: %{name: _fn, size: _fns} = _fs, hover_highlight?: _hh} =
           data
       ) do
     # Logger.debug "#{__MODULE__} accepted params: #{inspect data}"
@@ -78,7 +78,7 @@ defmodule ScenicWidgets.MenuBar.FloatButton do
           )
           |> Scenic.Primitives.text(args.label,
             id: :label,
-            font: :ibm_plex_mono,
+            font: args.font.name,
             font_size: args.font.size,
             translate: {args.margin, vpos},
             fill: theme.text
