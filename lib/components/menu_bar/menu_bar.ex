@@ -24,7 +24,6 @@ defmodule ScenicWidgets.MenuBar do
   defdelegate zero_arity_functions(m), to: ScenicWidgets.MenuBar.MenuMapMaker
   defdelegate modules_and_zero_arity_functions(m), to: ScenicWidgets.MenuBar.MenuMapMaker
 
-
   def validate(
         %{
           # The %Frame{} struct describing the rectangular size & placement of the component
@@ -51,20 +50,26 @@ defmodule ScenicWidgets.MenuBar do
       case Map.get(init_data, :item_width, :not_found) do
         {:fixed, _w} = provided_item_width ->
           provided_item_width
+
         :not_found ->
           {:fixed, @default_item_width}
       end
-    
+
     init_font_details =
       case Map.get(init_data, :font, :not_found) do
-        %{name: font_name, metrics: %FontMetrics{} =_fm, size: font_size} = provided_details when is_atom(font_name) and is_integer(font_size) ->
+        %{name: font_name, metrics: %FontMetrics{} = _fm, size: font_size} = provided_details
+        when is_atom(font_name) and is_integer(font_size) ->
           provided_details
-        %{name: font_name, size: custom_font_size} when is_atom(font_name) and is_integer(custom_font_size) ->
+
+        %{name: font_name, size: custom_font_size}
+        when is_atom(font_name) and is_integer(custom_font_size) ->
           {:ok, {_type, custom_font_metrics}} = Scenic.Assets.Static.meta(font_name)
           %{name: font_name, metrics: custom_font_metrics, size: custom_font_size}
+
         :not_found ->
           {:ok, {_type, default_font_metrics}} = Scenic.Assets.Static.meta(@default_font)
           %{name: @default_font, metrics: default_font_metrics, size: @default_top_line_font_size}
+
         font_name when is_atom(font_name) ->
           {:ok, {_type, custom_font_metrics}} = Scenic.Assets.Static.meta(font_name)
           %{name: font_name, metrics: custom_font_metrics, size: @default_top_line_font_size}
@@ -72,17 +77,21 @@ defmodule ScenicWidgets.MenuBar do
 
     init_sub_menu_opts =
       case Map.get(init_data, :sub_menu, :not_found) do
-        %{height: provided_height, font_size: font_size} = provided_sub_menu_opts when is_integer(provided_height) and is_integer(font_size) ->
+        %{height: provided_height, font_size: font_size} = provided_sub_menu_opts
+        when is_integer(provided_height) and is_integer(font_size) ->
           provided_sub_menu_opts
+
         :not_found ->
           %{height: @default_sub_menu_height, font_size: @default_sub_menu_font_size}
       end
-    
-    final_data = init_data |> Map.merge(%{
-      item_width: init_item_width,
-      font: init_font_details,
-      sub_menu: init_sub_menu_opts
-    })
+
+    final_data =
+      init_data
+      |> Map.merge(%{
+        item_width: init_item_width,
+        font: init_font_details,
+        sub_menu: init_sub_menu_opts
+      })
 
     {:ok, final_data}
   end

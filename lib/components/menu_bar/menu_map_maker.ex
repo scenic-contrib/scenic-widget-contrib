@@ -1,6 +1,4 @@
 defmodule ScenicWidgets.MenuBar.MenuMapMaker do
-
-
   @doc """
   Return a list of all the zero-arity functions in a module, in
   the correctly formatted list of `{label, function}` tuples for
@@ -40,7 +38,6 @@ defmodule ScenicWidgets.MenuBar.MenuMapMaker do
        end}
     end)
   end
-
 
   @doc """
   Construct a tree of zero-arity functions grouped by their modules,
