@@ -183,7 +183,6 @@ Scenic.Graph.build()
             pin: {0, 0},
             size: {vp_width, menu_bar_height}),
         menu_map: menu_map(),
-        item_width: {:fixed, 180},
         font: :ibm_plex_mono
 })
 ```
