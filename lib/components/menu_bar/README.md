@@ -169,7 +169,7 @@ Scenic.Graph.build()
         menu_map: menu_map,
         item_width: {:fixed, 180},
         font: menubar_font,
-        sub_menu: menu_bar.sub_menu
+        sub_menu: sub_menu_options
 })
 ```
 
