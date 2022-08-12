@@ -121,43 +121,13 @@ defmodule ScenicWidgets.MenuBar.FloatButton do
     end
   end
 
-  # TODO accept clicks, send msg bck up to menu bar??
   def handle_input({:cursor_pos, {_x, _y} = coords}, _context, scene) do
     bounds = Scenic.Graph.bounds(scene.assigns.graph)
-    # theme = scene.assigns.theme
-
-    IO.inspect(bounds, label: "BBB, #{inspect(scene.assigns.state.unique_id)}")
 
     if coords |> ScenicWidgets.Utils.inside?(bounds) do
       # Logger.debug "Detec'd hover: #{inspect scene.assigns.state.unique_id}, bounds: #{inspect bounds}"
       GenServer.cast(ScenicWidgets.MenuBar, {:hover, scene.assigns.state.unique_id})
     end
-
-    # new_graph =
-    #   if coords |> ScenicWidgets.Utils.inside?(bounds) do
-    #     GenServer.cast(ScenicWidgets.MenuBar, {:hover, scene.assigns.state.unique_id})
-
-    #     scene.assigns.graph
-    #     # TODO and change text to black
-    #     |> Scenic.Graph.modify(
-    #       :background,
-    #       &Scenic.Primitives.update_opts(&1, fill: theme.highlight, color: :black) #TODO use theme here
-    #     )
-    #   else
-    #     # GenServer.cast(ScenicWidgets.MenuBar, {:cancel, {:hover, scene.assigns.state.unique_id}})
-    #     scene.assigns.graph
-    #     |> Scenic.Graph.modify(
-    #       :background,
-    #       &Scenic.Primitives.update_opts(&1, fill: theme.active) #TODO use color: theme.something here
-    #     )
-    #   end
-
-    # new_scene =
-    #   scene
-    #   |> assign(graph: new_graph)
-    #   |> push_graph(new_graph)
-
-    # {:noreply, new_scene}
 
     {:noreply, scene}
   end
