@@ -8,45 +8,36 @@ not only will developing your Scenic components this way mean they are
 nicely de-coupled from your application logic, it makes them easier to
 share & be improved upon by the broader community.
 
-## How to import `scenic-widget-contrib` components
+Licensed as [Apache 2.0](./LICENSE)
 
-#### Step 1 - add to `mix.exs`
+## Getting Started
 
-Clone the repo next to wherever your Scenic project is running, so the
-directory structure looks like:
+Add `{:scenic_widget_contrib, github: "scenic-contrib/scenic-widget-contrib"}`
+to your deps in mix.exs
 
-```
-/dir                        <-- use `git clone` from here
-- /your_project             <-- this is where your Scenic app is
-- /scenic-widget-contrib    <-- here is where the widget-lib got cloned to
-```
+## Components
 
-and then import it by adding the following line to your `mix.exs` file:
+### MenuBar
 
-```
-{:scenic_widget_contrib, path: "../scenic-widget-contrib", override: true},
-```
+- [MenuBar](./lib/components/menu_bar/)
+- Status: Polished
 
-This references your local clone of the repo - any components you add
-inside the `scenic-widget-contrib` repo can now be used from within your
-other Scenic application.
+A nested menu at the top of the screen:
 
-#### Step 2 - add the custom components to your Scenic.Graph
+![MenuBar Screenshot](./lib/components/menu_bar/extra/menu_bar_screenshot.png)
 
-```
-graph
-|> ScenicWidgets.TestPattern.add_to_graph(%{} = _args)
-```
+### FrameBox
 
-## Tips & guidelines for developing custom Scenic components
+- [FrameBox](./lib/components/frame_box/)
+- Status: For Debugging
 
-### Using %Frame{} structs
+### TestPattern
 
-A %Frame{} struct is meant to formalize the rectangular size of a component -
-if a component accepts a Frame, it should scissor it's own frame so that
-it doesn't draw outside the frame.
+- [TestPattern](./lib/components/test_pattern/)
+- Status: In Development
 
-### Use one high-level group for a component
+## Getting Involved
 
-If you wrap all your component graph up inside one outer-group, this will
-let you translate the entire component as one unit.
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for info on contributing your own
+widgets and see [DEVELOPMENT.md](./DEVELOPMENT.md) for info on developing your
+own widgets.
