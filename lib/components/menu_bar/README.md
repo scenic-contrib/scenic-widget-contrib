@@ -14,22 +14,23 @@ Setting `pin: {0, 0}` places the MenuBar in the top-left corner.
 vp_width = 800 # need to pass in the ViewPort width
 
 Scenic.Graph.build()
-|> ScenicWidgets.MenuBar.add_to_graph( %{
-        frame: ScenicWidgets.Core.Structs.Frame.new(
-            pin: {0, 0},
-            size: {vp_width, _menu_bar_height = 60}),
-        menu_map: [
-            {:sub_menu, "Ice Cream", [
-                {"Chocolate", fn -> IO.puts "clicked: `Chocolate`!" end},
-                {"Vanilla", fn -> IO.puts "clicked: `Vanilla`!" end}
-            ]},
-            {:sub_menu, "Ninja Turtles", [
-                {"Leonardo", fn -> IO.puts "clicked: `Leonardo`!" end},
-                {"Raphael", fn -> IO.puts "clicked: `Raphael`!" end},
-                {"Donatello", fn -> IO.puts "clicked: `Donatello`!" end},
-                {"Michelangelo", fn -> IO.puts "clicked: `Michelangelo`!" end},
-            ]}
-        ]
+|> ScenicWidgets.MenuBar.add_to_graph(%{
+  frame: ScenicWidgets.Core.Structs.Frame.new(
+    pin: {0, 0},
+    size: {vp_width, _menu_bar_height = 60}
+  ),
+  menu_map: [
+    {:sub_menu, "Ice Cream", [
+      {"Chocolate", fn -> IO.puts "clicked: `Chocolate`!" end},
+      {"Vanilla", fn -> IO.puts "clicked: `Vanilla`!" end}
+    ]},
+    {:sub_menu, "Ninja Turtles", [
+      {"Leonardo", fn -> IO.puts "clicked: `Leonardo`!" end},
+      {"Raphael", fn -> IO.puts "clicked: `Raphael`!" end},
+      {"Donatello", fn -> IO.puts "clicked: `Donatello`!" end},
+      {"Michelangelo", fn -> IO.puts "clicked: `Michelangelo`!" end},
+    ]}
+  ]
 })
 ```
 
@@ -48,29 +49,29 @@ nesting this format, for example:
 
 ```
 def calc_menu_map() do
-    [
-        {:sub_menu, "Test Menu", [
-            {"Item One", fn -> IO.puts "clicked: `Item One`!" end},
-            {"Item Two", fn -> IO.puts "clicked: `Item Two`!" end},
-            {:sub_menu, "Dropdown", [
-                {"Dropdown 1", fn -> IO.puts "clicked: `Dropdown 1`!" end},
-                {"Dropdown 2", fn -> IO.puts "clicked: `Dropdown 2`!" end}
-            ]},
-            {"Item Three", fn -> IO.puts "clicked: `Item Three`!" end},
-            {:sub_menu, "Another Menu", [
-                {"Dropdown 1", fn -> IO.puts "clicked: `Dropdown 1`!" end},
-                {:sub_menu, "Inner Menu", [
-                    {"Inner Menu 1", fn -> IO.puts "clicked: `Inner Menu 1`!" end},
-                    {"Inner Menu 2", fn -> IO.puts "clicked: `Inner Menu 2`!" end}
-                ]},
-                {"Dropdown 2", fn -> IO.puts "clicked: `Dropdown 2`!" end}
-            ]}
+  [
+    {:sub_menu, "Test Menu", [
+      {"Item One", fn -> IO.puts "clicked: `Item One`!" end},
+      {"Item Two", fn -> IO.puts "clicked: `Item Two`!" end},
+      {:sub_menu, "Dropdown", [
+        {"Dropdown 1", fn -> IO.puts "clicked: `Dropdown 1`!" end},
+        {"Dropdown 2", fn -> IO.puts "clicked: `Dropdown 2`!" end}
+      ]},
+      {"Item Three", fn -> IO.puts "clicked: `Item Three`!" end},
+      {:sub_menu, "Another Menu", [
+        {"Dropdown 1", fn -> IO.puts "clicked: `Dropdown 1`!" end},
+        {:sub_menu, "Inner Menu", [
+          {"Inner Menu 1", fn -> IO.puts "clicked: `Inner Menu 1`!" end},
+          {"Inner Menu 2", fn -> IO.puts "clicked: `Inner Menu 2`!" end}
         ]},
-        {:sub_menu, "Ice Cream", [
-            {"Chocolate", fn -> IO.puts "clicked: `Chocolate`!" end},
-            {"Vanilla", fn -> IO.puts "clicked: `Vanilla`!" end}
-        ]}
-    ]
+        {"Dropdown 2", fn -> IO.puts "clicked: `Dropdown 2`!" end}
+      ]}
+    ]},
+    {:sub_menu, "Ice Cream", [
+      {"Chocolate", fn -> IO.puts "clicked: `Chocolate`!" end},
+      {"Vanilla", fn -> IO.puts "clicked: `Vanilla`!" end}
+    ]}
+  ]
 end
 ```
 
@@ -91,14 +92,14 @@ is supposed to react to the button click, e.g.
 
 ```
 {:sub_menu, "Ice Cream", [
-        {"Chocolate", fn ->
-            IO.puts "clicked: `Chocolate`!"
-            send IceCreamManager, {:clicked, :chocolate}
-        end},
-        {"Vanilla", fn ->
-            IO.puts "clicked: `Vanilla`!"
-            send IceCreamManager, {:clicked, :chocolate}
-        end}
+  {"Chocolate", fn ->
+    IO.puts "clicked: `Chocolate`!"
+    send IceCreamManager, {:clicked, :chocolate}
+  end},
+  {"Vanilla", fn ->
+    IO.puts "clicked: `Vanilla`!"
+    send IceCreamManager, {:clicked, :chocolate}
+  end}
 ]}
 ```
 
