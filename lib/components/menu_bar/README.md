@@ -292,7 +292,7 @@ API
 
 We can define a sub-menu as follows:
 
-```
+```elixir
 {:sub_menu, "API", ScenicWidgets.MenuBar.modules_and_zero_arity_functions("Elixir.Flamelex.API")}
 ```
 
