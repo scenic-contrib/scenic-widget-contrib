@@ -114,7 +114,7 @@ the function-capture syntax native to Elixir, e.g.
 
 ## Dynamically changing the menu-map
 
-The MenuBar can have it's contents updated at any time - this is expecially
+The MenuBar can have it's contents updated at any time - this is especially
 useful for making context-aware menus, e.g. if one of your sub-menus showed
 a list of open files (as is the case for [Flamelex](https://github.com/JediLuke/flamelex)) then opening
 a new file should update the menu-bar to show this new file (which Flamelex does!)
@@ -147,29 +147,32 @@ vp_width = 1000         # fetch the viewport width from Scenic
 menu_bar_height = 40    # pick whatever you like
 {:fixed, 220}           # sets how wide the columns of the menus are
 
+# Note: IBM Plex Mono is open source and can be downloaded at:
+# https://fonts.google.com/specimen/IBM+Plex+Mono
 {:ok, ibm_plex_mono_metrics} =
-    TruetypeMetrics.load("./assets/fonts/IBMPlexMono-Regular.ttf")
+  TruetypeMetrics.load("./assets/fonts/IBMPlexMono-Regular.ttf")
 
 font = %{
-    name: :ibm_plex_mono,   # pass in the custom font here
-    size: 36,               # This is the size of the font for the main MenuBar (not sub-menus)
-    metrics: ibm_plex_mono_metrics      # pass in the FontMetrics we calculated above
+  name: :ibm_plex_mono,   # pass in the custom font here
+  size: 36,               # This is the size of the font for the main MenuBar (not sub-menus)
+  metrics: ibm_plex_mono_metrics      # pass in the FontMetrics we calculated above
 }
 
 sub_menu_options = %{
-    height: 40,         # the block-height of sub-menu item rectangles
-    font_size: 22       # font-size to use in the sub-menus
+  height: 40,         # the block-height of sub-menu item rectangles
+  font_size: 22       # font-size to use in the sub-menus
 }
 
 Scenic.Graph.build()
 |> ScenicWidgets.MenuBar.add_to_graph( %{
-        frame: ScenicWidgets.Core.Structs.Frame.new(
-            pin: {0, 0},
-            size: {vp_width, menu_bar_height}),
-        menu_map: menu_map,
-        item_width: {:fixed, 180},
-        font: menubar_font,
-        sub_menu: sub_menu_options
+  frame: ScenicWidgets.Core.Structs.Frame.new(
+    pin: {0, 0},
+    size: {vp_width, menu_bar_height}
+  ),
+  menu_map: menu_map,
+  item_width: {:fixed, 180},
+  font: menubar_font,
+  sub_menu: sub_menu_options
 })
 ```
 
@@ -178,12 +181,13 @@ keep the default size, is to pass in the font's name (as an atom):
 
 ```
 Scenic.Graph.build()
-|> ScenicWidgets.MenuBar.add_to_graph( %{
-        frame: ScenicWidgets.Core.Structs.Frame.new(
-            pin: {0, 0},
-            size: {vp_width, menu_bar_height}),
-        menu_map: menu_map(),
-        font: :ibm_plex_mono
+|> ScenicWidgets.MenuBar.add_to_graph(%{
+  frame: ScenicWidgets.Core.Structs.Frame.new(
+    pin: {0, 0},
+    size: {vp_width, menu_bar_height}
+  ),
+  menu_map: menu_map(),
+  font: :ibm_plex_mono
 })
 ```
 
@@ -196,7 +200,7 @@ the function defined against that item in the menu-map.
 Press escape to close the menu from the keyboard. Move the mouse below
 the longest open sub-menu to automatically close the menu.
 
-Right now the MenuBar doesn't recognise when you move the mouse horizontally
+Right now the MenuBar doesn't recognize when you move the mouse horizontally
 away from a sub-menu, so it stays open. This is technically a bug, but
 surprisingly it is no issue in practice (at least for me).
 
@@ -212,18 +216,17 @@ Imagine we have this module:
 
 ```
 defmodule ArityZeroDemo do
+  def custom_fn do
+    IO.puts("You called the custom fn!")
+  end
 
-    def custom_fn do
-        IO.puts "You called the custom fn!"
-    end
+  def my_fave_fn do
+    IO.puts("This is my favourite function...")
+  end
 
-    def my_fave_fn do
-        IO.puts "This is my favourite function..."
-    end
-
-    def arity_one(x) do
-        IO.puts "You passed in: #{inspect x}"
-    end
+  def arity_one(x) do
+    IO.puts("You passed in: #{inspect x}")
+  end
 end
 ```
 
@@ -249,27 +252,23 @@ Here is a tiny example:
 
 ```
 defmodule Flamelex.API do
-
-    def one_func, do: IO.puts "Clicked 1"
-    def two_func, do: IO.puts "Clicked 2"
+  def one_func, do: IO.puts "Clicked 1"
+  def two_func, do: IO.puts "Clicked 2"
 end
 
 defmodule Flamelex.API.FirstSub do
-
-    def one_func, do: IO.puts "Clicked FirstSub - 1"
-    def two_func, do: IO.puts "Clicked FirstSub - 2"
+  def one_func, do: IO.puts "Clicked FirstSub - 1"
+  def two_func, do: IO.puts "Clicked FirstSub - 2"
 end
 
 defmodule Flamelex.API.SecondSub do
-
-    def one_func, do: IO.puts "Clicked SecondSub - 1"
-    def two_func, do: IO.puts "Clicked SecondSub - 2"
+  def one_func, do: IO.puts "Clicked SecondSub - 1"
+  def two_func, do: IO.puts "Clicked SecondSub - 2"
 end
 
 defmodule Flamelex.API.SecondSub.Nested do
-
-    def one_func, do: IO.puts "Clicked SecondSub.Nested - 1"
-    def two_func, do: IO.puts "Clicked SecondSub.Nested - 2"
+  def one_func, do: IO.puts "Clicked SecondSub.Nested - 1"
+  def two_func, do: IO.puts "Clicked SecondSub.Nested - 2"
 end
 ```
 
@@ -278,14 +277,14 @@ To generate a menu tree which looks like this:
 ```
 API
 - FirstSub
-    - one_func
-    - two_func
+  - one_func
+  - two_func
 - SecondSub
-    - Nested
-        - one_func
-        - two_func
+  - Nested
     - one_func
     - two_func
+  - one_func
+  - two_func
 - one_func
 - two_func
 ```

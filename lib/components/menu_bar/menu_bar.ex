@@ -73,6 +73,11 @@ defmodule ScenicWidgets.MenuBar do
         font_name when is_atom(font_name) ->
           {:ok, {_type, custom_font_metrics}} = Scenic.Assets.Static.meta(font_name)
           %{name: font_name, metrics: custom_font_metrics, size: @default_top_line_font_size}
+
+        other ->
+          raise "MenuBar: Invalid font received. Should either be an atom representing a " <>
+                  "font name or a map with `:name`, `:size`, and optionally `:metrics`. " <>
+                  "(received: #{inspect(other, pretty: true)})"
       end
 
     init_sub_menu_opts =
