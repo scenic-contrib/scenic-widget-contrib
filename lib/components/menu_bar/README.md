@@ -10,7 +10,7 @@ Demo video (5 minutes): https://youtu.be/k1kiCL9oMf4
 This is an example of all the code required to render a MenuBar.
 Setting `pin: {0, 0}` places the MenuBar in the top-left corner.
 
-```
+```elixir
 vp_width = 800 # need to pass in the ViewPort width
 
 Scenic.Graph.build()
@@ -47,7 +47,7 @@ shown for this sub-menu and the item list is another list of exactly
 the same format. You can define sub-menus inside sub-menus just by
 nesting this format, for example:
 
-```
+```elixir
 def calc_menu_map() do
   [
     {:sub_menu, "Test Menu", [
@@ -90,7 +90,7 @@ is simply returning some data, this will basically do nothing. The best
 way is to simply send a message to whatever other part of your software
 is supposed to react to the button click, e.g.
 
-```
+```elixir
 {:sub_menu, "Ice Cream", [
   {"Chocolate", fn ->
     IO.puts "clicked: `Chocolate`!"
@@ -109,7 +109,7 @@ and is not necessary, just sometimes useful.
 To call a zero-arity defined in a different module, simply use
 the function-capture syntax native to Elixir, e.g.
 
-```
+```elixir
 {"Strawberry", &IceCream.Flavour.strawberry/0}
 ```
 
@@ -122,7 +122,7 @@ a new file should update the menu-bar to show this new file (which Flamelex does
 
 To update the menu map, simply cast to the component with a new MenuMap.
 
-```
+```elixir
 # the Component is automatically registered with this name
 GenServer.cast(ScenicWidgets.MenuBar, {:put_menu_map, new_menu_map})
 
@@ -143,7 +143,7 @@ by passing them in as arguments when creating the Graph.
 
 Here is an example of using all of the extended options
 
-```
+```elixir
 vp_width = 1000         # fetch the viewport width from Scenic
 menu_bar_height = 40    # pick whatever you like
 {:fixed, 220}           # sets how wide the columns of the menus are
@@ -180,7 +180,7 @@ Scenic.Graph.build()
 One shortcut, if you just want to use a custom font but are happy to
 keep the default size, is to pass in the font's name (as an atom):
 
-```
+```elixir
 Scenic.Graph.build()
 |> ScenicWidgets.MenuBar.add_to_graph(%{
   frame: ScenicWidgets.Core.Structs.Frame.new(
@@ -215,7 +215,7 @@ some tools for automatically generating them.
 
 Imagine we have this module:
 
-```
+```elixir
 defmodule ArityZeroDemo do
   def custom_fn do
     IO.puts("You called the custom fn!")
@@ -235,7 +235,7 @@ To automatically create a sub-menu of all the zero-arity functions
 in this module (it has to be the zero-arity functions, since there's
 no way of passing in extra arguments), you can do this:
 
-```
+```elixir
 {:sub_menu, "arity/0 demo", ScenicWidgets.MenuBar.zero_arity_functions(ArityZeroDemo)}
 ```
 
@@ -251,7 +251,7 @@ Well, we can!
 
 Here is a tiny example:
 
-```
+```elixir
 defmodule Flamelex.API do
   def one_func, do: IO.puts "Clicked 1"
   def two_func, do: IO.puts "Clicked 2"
