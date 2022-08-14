@@ -29,17 +29,7 @@ defmodule ScenicWidgets.Core.Structs.Frame do
     # How large in {width, height} this Frame is
     size: nil,
     # a %Dimensions{} struct, specifying the height and width of the frame - this makes for some nice syntax down the road e.g. frame.dimensions.width, rather than having to pull out a {width, height} tuple
-    dimensions: nil,
-    margin: %{
-      top: 0,
-      right: 0,
-      bottom: 0,
-      left: 0
-    },
-    # an optional label, usually used to render a footer bar
-    label: nil,
-    # A map to hold options, e.g. %{render_footer?: true}
-    opts: %{}
+    dimensions: nil
   ]
 
   # Make a new frame the same size as the ViewPort
@@ -52,6 +42,14 @@ defmodule ScenicWidgets.Core.Structs.Frame do
     }
   end
 
+  def new(size: {w, h}) do
+    new(pin: {0, 0}, size: {w, h})
+  end
+
+  def new(width: w, height: h) do
+    new(pin: {0, 0}, size: {w, h})
+  end
+
   # Make a new frame, with the top-left corner at point `pin`
   def new(pin: {x, y}, size: {w, h}) do
     %__MODULE__{
@@ -60,5 +58,22 @@ defmodule ScenicWidgets.Core.Structs.Frame do
       size: {w, h},
       dimensions: Dimensions.new(width: w, height: h)
     }
+  end
+
+  def new(top_left: top_left, dimensions: size) do
+    new(pin: top_left, size: size)
+  end
+
+  def new(%Scenic.ViewPort{size: {w, h}}, menubar_height: mh) do
+    %__MODULE__{
+      pin: {0, mh},
+      top_left: Coordinates.new(x: 0, y: mh),
+      size: {w, h - mh},
+      dimensions: Dimensions.new(width: w, height: h - mh)
+    }
+  end
+
+  def center(%__MODULE__{top_left: c, dimensions: d}) do
+    Coordinates.new(x: c.x + d.width / 2, y: c.y + d.height / 2)
   end
 end

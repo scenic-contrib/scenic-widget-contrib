@@ -45,7 +45,8 @@ defmodule ScenicWidgets.ScenicEventsDefinitions do
       # {:key, {" ", :press, 1}}
       @left_shift_and_space_bar {:key, {:key_space, @key_pressed, [:shift]}}
       # {:key, {"tab", :press, 1}}
-      @left_shift_and_tab {:key, {:key_tab, @key_pressed, [:shift]}}
+      @shift_tab {:key, {:key_tab, @key_pressed, [:shift]}}
+      # @left_shift_and_tab {:key, {:key_tab, @key_pressed, [:shift]}} #TODO pretty sure we can delete this one?
 
       # NOTE: even though these are numbers, the last one in the tuple
       #      we send, is still always zero
@@ -191,7 +192,7 @@ defmodule ScenicWidgets.ScenicEventsDefinitions do
       @period {:key, {:key_dot, @key_pressed, []}}
       @bang {:key, {:key_1, @key_pressed, [:shift]}}
       @question_mark {:key, {:key_slash, @key_pressed, [:shift]}}
-      @at_sign {:key, {:key_2, @key_pressed, [:shift]}}
+      @asperand {:key, {:key_2, @key_pressed, [:shift]}}
       @colon {:key, {:key_semicolon, @key_pressed, [:shift]}}
       @comma {:key, {:key_comma, @key_pressed, []}}
       @quote_character {:key, {:key_apostrophe, @key_pressed, [:shift]}}
@@ -219,15 +220,24 @@ defmodule ScenicWidgets.ScenicEventsDefinitions do
         @right_parenthesis,
         @left_brace,
         @right_brace,
-        @at_sign,
+        @asperand,
         @minus_sign,
         @apostrophe
       ]
+
+      @left_arrow {:key, {:key_left, @key_pressed, []}}
+      @right_arrow {:key, {:key_right, @key_pressed, []}}
+      @up_arrow {:key, {:key_up, @key_pressed, []}}
+      @down_arrow {:key, {:key_down, @key_pressed, []}}
+
+      @arrow_keys [@left_arrow, @right_arrow, @up_arrow, @down_arrow]
 
       @valid_text_input_characters @all_letters ++
                                      @all_numbers ++
                                      @all_punctuation ++
                                      [@space_bar, @enter_key]
+
+      @meta_lowercase_s {:key, {:key_s, @key_pressed, [:meta]}}
 
       ## convert a keystroke into a string - used for inputing text
 
@@ -296,13 +306,12 @@ defmodule ScenicWidgets.ScenicEventsDefinitions do
       def key2string(@uppercase_Y), do: "Y"
       def key2string(@uppercase_Z), do: "Z"
 
-      # def key2string(@escape), do: "escape"
       def key2string(@space_bar), do: " "
       def key2string(@enter_key), do: "\n"
 
       def key2string(@period), do: "."
       def key2string(@bang), do: "!"
-      def key2string(@at_sign), do: "@"
+      def key2string(@asperand), do: "@"
       def key2string(@question_mark), do: "?"
       def key2string(@colon), do: ":"
       def key2string(@comma), do: ","
