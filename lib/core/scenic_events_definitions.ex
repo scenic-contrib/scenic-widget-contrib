@@ -192,7 +192,7 @@ defmodule ScenicWidgets.ScenicEventsDefinitions do
       @period {:key, {:key_dot, @key_pressed, []}}
       @bang {:key, {:key_1, @key_pressed, [:shift]}}
       @question_mark {:key, {:key_slash, @key_pressed, [:shift]}}
-      @ampersand {:key, {:key_2, @key_pressed, [:shift]}}
+      @asperand {:key, {:key_2, @key_pressed, [:shift]}}
       @colon {:key, {:key_semicolon, @key_pressed, [:shift]}}
       @comma {:key, {:key_comma, @key_pressed, []}}
       @quote_character {:key, {:key_apostrophe, @key_pressed, [:shift]}}
@@ -220,7 +220,7 @@ defmodule ScenicWidgets.ScenicEventsDefinitions do
         @right_parenthesis,
         @left_brace,
         @right_brace,
-        @ampersand,
+        @asperand,
         @minus_sign,
         @apostrophe
       ]
@@ -311,7 +311,7 @@ defmodule ScenicWidgets.ScenicEventsDefinitions do
 
       def key2string(@period), do: "."
       def key2string(@bang), do: "!"
-      def key2string(@ampersand), do: "@"
+      def key2string(@asperand), do: "@"
       def key2string(@question_mark), do: "?"
       def key2string(@colon), do: ":"
       def key2string(@comma), do: ","
