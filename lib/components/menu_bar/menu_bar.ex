@@ -98,7 +98,7 @@ defmodule ScenicWidgets.MenuBar do
 
   def init(scene, args, opts) do
     # Logger.debug("#{__MODULE__} initializing...")
-    Process.register(self(), __MODULE__)
+    # Process.register(self(), __MODULE__)
 
     theme =
       (opts[:theme] || Scenic.Primitive.Style.Theme.preset(:light))
@@ -183,7 +183,7 @@ defmodule ScenicWidgets.MenuBar do
       # normal float button
       {_label, action} ->
         action.()
-        GenServer.cast(__MODULE__, {:cancel, scene.assigns.state.mode})
+        GenServer.cast(self(), {:cancel, scene.assigns.state.mode})
         {:noreply, scene}
 
       {:sub_menu, _label, _menu_contents} ->
@@ -284,7 +284,7 @@ defmodule ScenicWidgets.MenuBar do
 
   def handle_input(@escape_key, _context, scene) do
     # Logger.debug("#{__MODULE__} cancelling due to ESCAPE KEY !!")
-    GenServer.cast(__MODULE__, {:cancel, scene.assigns.state.mode})
+    GenServer.cast(self(), {:cancel, scene.assigns.state.mode})
     {:noreply, scene}
   end
 

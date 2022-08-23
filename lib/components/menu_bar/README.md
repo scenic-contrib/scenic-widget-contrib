@@ -122,10 +122,7 @@ a new file should update the menu-bar to show this new file (which Flamelex does
 To update the menu map, simply cast to the component with a new MenuMap.
 
 ```
-# the Component is automatically registered with this name
-GenServer.cast(ScenicWidgets.MenuBar, {:put_menu_map, new_menu_map})
-
-# alternatively, if you render this component from within another
+# if you render this component from within another
 # scenic component, you can use `cast_children/2`
 cast_children(scene, {:put_menu_map, new_menu_map})
 ```
