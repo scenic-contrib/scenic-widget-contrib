@@ -22,7 +22,8 @@ defmodule ScenicWidgets.MixProject do
   defp deps do
     [
       {:scenic, "~> 0.11.0-beta.0"},
-      {:font_metrics, "~> 0.5"}
+      # {:font_metrics, "~> 0.5"},
+      {:font_metrics, git: "https://github.com/JediLuke/font_metrics", branch: "add_line_height_fn"}
     ]
   end
 end
