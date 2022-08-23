@@ -15,9 +15,9 @@ defmodule ScenicWidgets.TextPad.Lib.RenderLib do
     #     args.font.metrics
     #   )
 
-    # line_height = FontMetrics.line_height(args.font.size, args.font.metrics)
-    # |> IO.inspect(label: "lineh")
-    line_height = 29 #TODO this is hard-coded until FontMetrics.line height works, through trial and error I know this is the correct number for size 24 IBm Plex Mono
+    line_height = FontMetrics.line_height(args.font.size, args.font.metrics)
+    |> IO.inspect(label: "lineh")
+    # line_height = 29 #TODO this is hard-coded until FontMetrics.line height works, through trial and error I know this is the correct number for size 24 IBm Plex Mono
 
     # NOTE: This only works for one cursor, for now...
     # [{1, %{col: col, line: line}}] = args.cursors |> IO.inspect
