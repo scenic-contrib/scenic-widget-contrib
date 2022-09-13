@@ -34,22 +34,31 @@ defmodule ScenicWidgets.ScenicEventsDefinitions do
       @click 1
       @release_click 0
 
+      @space_bar {:key, {:key_space, @key_pressed, []}}
+  
       @left_shift {:key, {:key_leftshift, @key_pressed, []}}
+      @right_shift {:key, {:key_rightshift, @key_pressed, []}}
+      @left_ctrl {:key, {:key_leftctrl, @key_pressed, []}}
+      @right_ctrl {:key, {:key_rightctrl, @key_pressed, []}}
+      @left_alt {:key, {:key_leftalt, @key_pressed, []}}
+      @right_alt {:key, {:key_rightalt, @key_pressed, []}}
+      # in macOS the meta-key registers as :key_unknown, but appears as [:meta] in a keypress combination still
+      @meta {:key, {:key_unknown, @key_pressed, []}}
+
       @escape_key {:key, {:key_esc, @key_pressed, []}}
+      @tab_key {:key, {:key_tab, @key_pressed, []}}
       @enter_key {:key, {:key_enter, @key_pressed, []}}
       @backspace_key {:key, {:key_backspace, @key_pressed, []}}
-      @tab_key {:key, {:key_tab, @key_pressed, []}}
 
-      @space_bar {:key, {:key_space, @key_pressed, []}}
-
-      # {:key, {" ", :press, 1}}
-      @left_shift_and_space_bar {:key, {:key_space, @key_pressed, [:shift]}}
-      # {:key, {"tab", :press, 1}}
+      @shift_space {:key, {:key_space, @key_pressed, [:shift]}}
       @shift_tab {:key, {:key_tab, @key_pressed, [:shift]}}
-      # @left_shift_and_tab {:key, {:key_tab, @key_pressed, [:shift]}} #TODO pretty sure we can delete this one?
+      @shift_enter {:key, {:key_enter, @key_pressed, [:shift]}}
 
-      # NOTE: even though these are numbers, the last one in the tuple
-      #      we send, is still always zero
+      @up_arrow {:key, {:key_up, @key_pressed, []}}
+      @left_arrow {:key, {:key_left, @key_pressed, []}}
+      @down_arrow {:key, {:key_down, @key_pressed, []}}
+      @right_arrow {:key, {:key_right, @key_pressed, []}}
+
       @number_0 {:key, {:key_0, @key_pressed, []}}
       @number_1 {:key, {:key_1, @key_pressed, []}}
       @number_2 {:key, {:key_2, @key_pressed, []}}
@@ -188,41 +197,72 @@ defmodule ScenicWidgets.ScenicEventsDefinitions do
 
       @all_letters @lowercase_letters ++ @uppercase_letters
 
-      # TODO go through punctuation in some kind of order - go left to right across a QWERTY keyboard
-      @period {:key, {:key_dot, @key_pressed, []}}
+      @backtick {:key, {:key_grave, @key_pressed, []}}
+      @tilde {:key, {:key_grave, @key_pressed, [:shift]}}
       @bang {:key, {:key_1, @key_pressed, [:shift]}}
-      @question_mark {:key, {:key_slash, @key_pressed, [:shift]}}
       @asperand {:key, {:key_2, @key_pressed, [:shift]}}
-      @colon {:key, {:key_semicolon, @key_pressed, [:shift]}}
-      @comma {:key, {:key_comma, @key_pressed, []}}
-      @quote_character {:key, {:key_apostrophe, @key_pressed, [:shift]}}
-      @apostrophe {:key, {:key_apostrophe, @key_pressed, []}}
-      @underscore {:key, {:key_minus, @key_pressed, [:shift]}}
+      @hash {:key, {:key_3, @key_pressed, [:shift]}}
+      @dollar_sign {:key, {:key_4, @key_pressed, [:shift]}}
       @percent_sign {:key, {:key_5, @key_pressed, [:shift]}}
+      @caret {:key, {:key_6, @key_pressed, [:shift]}}
+      @ampersand {:key, {:key_7, @key_pressed, [:shift]}}
+      @asterisk {:key, {:key_8, @key_pressed, [:shift]}}
       @left_parenthesis {:key, {:key_9, @key_pressed, [:shift]}}
       @right_parenthesis {:key, {:key_0, @key_pressed, [:shift]}}
+      @minus_sign {:key, {:key_minus, @key_pressed, []}}
+      @underscore {:key, {:key_minus, @key_pressed, [:shift]}}
+      @equals_sign {:key, {:key_equal, @key_pressed, []}}
+      @plus_sign {:key, {:key_equal, @key_pressed, [:shift]}}
+      @left_square_bracket {:key, {:key_leftbrace, @key_pressed, []}}
+      @right_square_bracket {:key, {:key_rightbrace, @key_pressed, []}}
       @left_brace {:key, {:key_leftbrace, @key_pressed, [:shift]}}
       @right_brace {:key, {:key_rightbrace, @key_pressed, [:shift]}}
-      @minus_sign {:key, {:key_minus, @key_pressed, []}}
-
-      # TODO what is the beauty!?
-      # {:key, {:key_space, 0, [:shift]}}
-
+      @backslash {:key, {:key_backslash, @key_pressed, []}}
+      @pipe {:key, {:key_backslash, @key_pressed, [:shift]}}
+      @semicolon {:key, {:key_semicolon, @key_pressed, []}}
+      @colon {:key, {:key_semicolon, @key_pressed, [:shift]}}
+      @apostrophe {:key, {:key_apostrophe, @key_pressed, []}}
+      @quotation {:key, {:key_apostrophe, @key_pressed, [:shift]}}
+      @comma {:key, {:key_comma, @key_pressed, []}}
+      @less_than {:key, {:key_comma, @key_pressed, [:shift]}}
+      @period {:key, {:key_dot, @key_pressed, []}}
+      @greater_than {:key, {:key_dot, @key_pressed, [:shift]}}
+      @forward_slash {:key, {:key_slash, @key_pressed, []}}
+      @question_mark {:key, {:key_slash, @key_pressed, [:shift]}}
+      
       @all_punctuation [
-        @period,
+        @backtick,
+        @tilde,
         @bang,
-        @question_mark,
-        @colon,
-        @comma,
-        @quote_character,
+        @asperand,
+        @hash,
+        @dollar_sign,
         @percent_sign,
+        @caret,
+        @ampersand,
+        @asterisk,
         @left_parenthesis,
         @right_parenthesis,
+        @minus_sign,
+        @underscore,
+        @equals_sign,
+        @plus_sign,
+        @left_square_bracket,
+        @right_square_bracket,
         @left_brace,
         @right_brace,
-        @asperand,
-        @minus_sign,
-        @apostrophe
+        @backslash,
+        @pipe,
+        @semicolon,
+        @colon,
+        @apostrophe,
+        @quotation,
+        @comma,
+        @less_than,
+        @period,
+        @greater_than,
+        @forward_slash,
+        @question_mark
       ]
 
       @left_arrow {:key, {:key_left, @key_pressed, []}}
@@ -309,21 +349,39 @@ defmodule ScenicWidgets.ScenicEventsDefinitions do
       def key2string(@space_bar), do: " "
       def key2string(@enter_key), do: "\n"
 
-      def key2string(@period), do: "."
+
+      def key2string(@backtick), do: "`"
+      def key2string(@tilde), do: "~"
       def key2string(@bang), do: "!"
       def key2string(@asperand), do: "@"
-      def key2string(@question_mark), do: "?"
-      def key2string(@colon), do: ":"
-      def key2string(@comma), do: ","
-      def key2string(@quote_character), do: "\""
-      def key2string(@underscore), do: "_"
+      def key2string(@hash), do: "#"
+      def key2string(@dollar_sign), do: "$"
       def key2string(@percent_sign), do: "%"
+      def key2string(@caret), do: "^"
+      def key2string(@ampersand), do: "&"
+      def key2string(@asterisk), do: "*"
       def key2string(@left_parenthesis), do: "("
       def key2string(@right_parenthesis), do: ")"
+      def key2string(@minus_sign), do: "-"
+      def key2string(@underscore), do: "_"
+      def key2string(@equals_sign), do: "="
+      def key2string(@plus_sign), do: "+"
+      def key2string(@left_square_bracket), do: "["
+      def key2string(@right_square_bracket), do: "]"
       def key2string(@left_brace), do: "{"
       def key2string(@right_brace), do: "}"
-      def key2string(@minus_sign), do: "-"
+      def key2string(@backslash), do: "\\"
+      def key2string(@pipe), do: "|"
+      def key2string(@semicolon), do: ";"
+      def key2string(@colon), do: ":"
       def key2string(@apostrophe), do: "'"
+      def key2string(@quotation), do: "\""
+      def key2string(@comma), do: ","
+      def key2string(@less_than), do: "<"
+      def key2string(@period), do: "."
+      def key2string(@greater_than), do: ">"
+      def key2string(@forward_slash), do: "/"
+      def key2string(@question_mark), do: "?"
 
       def key2string(x) do
         # NOTE: I originally had this here for debugging, but it raises
