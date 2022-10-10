@@ -39,9 +39,9 @@ defmodule ScenicWidgets.TextPad.CursorCaret do
   end
 
   # def validate(%{coords: num} = data) when is_integer(num) and num >= 0 do
-  def validate(%{coords: _coords, height: _h} = data) do
+  def validate(%{coords: _coords, height: _h, margin: margin} = data) do
     # vim-insert mode by default
-    validate(data |> Map.merge(%{mode: :cursor}))
+    validate(data |> Map.merge(%{mode: :cursor, margin: margin}))
   end
 
   def init(scene, args, opts) do
@@ -60,6 +60,8 @@ defmodule ScenicWidgets.TextPad.CursorCaret do
     #     @cursor_width
     #   end
 
+    IO.inspect args.coords, label: "FIRST COORDS"
+
     init_graph =
       Scenic.Graph.build()
       |> Scenic.Primitives.group(
@@ -70,7 +72,7 @@ defmodule ScenicWidgets.TextPad.CursorCaret do
             fill: theme.text
           )
         end,
-        id: :blinker,
+        id: :cursor,
         translate: args.coords
       )
 
@@ -86,29 +88,82 @@ defmodule ScenicWidgets.TextPad.CursorCaret do
     init_scene =
       scene
       |> assign(graph: init_graph)
+      |> assign(args: args) # Lol todo
       # |> assign(frame: args.frame)
-      |> assign(coords: args.coords)
+      # |> assign(coords: args.coords)
+      |> assign(theme: theme)
       |> push_graph(init_graph)
 
     {:ok, init_scene}
   end
 
-  def handle_cast({:move, 1}, %{assigns: %{coords: {x_pos, y_pos}}} = scene) do
-    # TODo get real char width lol
-    new_coords = {x_pos + 19, y_pos}
+  def handle_cast({:move, {x_pos, _y_pos} = new_coords}, scene) do
 
-    new_graph =
-      scene.assigns.graph
-      |> Scenic.Graph.modify(:blinker, &Scenic.Primitives.update_opts(&1, translate: new_coords))
+    # new_coords = 
+    #   {scene.assigns.margin.left + x_pos, scene.assigns.margin.top + (line_num * line_height)}
 
-    new_scene =
-      scene
-      |> assign(graph: new_graph)
-      |> assign(coords: new_coords)
-      |> push_graph(new_graph)
+    # IO.puts "~~~~~MOVIN~~~~~ #{inspect new_coords}"
+    # #TODO pause blinking
+    new_graph = scene.assigns.graph
+    |> Scenic.Graph.modify(:cursor, &Scenic.Primitives.update_opts(&1, translate: new_coords))
+
+
+    # new_graph = scene.assigns.graph
+    # |> Scenic.Primitives.update_opts(&1, translate: new_coords)
+
+
+    # # theme =
+    # #   (opts[:theme] || Scenic.Primitive.Style.Theme.preset(:light))
+    # #   |> Scenic.Primitive.Style.Theme.normalize()
+
+    # width = if scene.assigns.args.mode == :block, do: @block_width, else: @cursor_width
+    # # width =
+    # #   if args.mode in @normal_modes do
+    # #     @cursor_width
+    # #   end
+
+
+    # new_graph =
+    #   Scenic.Graph.build()
+    #   |> Scenic.Primitives.group(
+    #     fn graph ->
+    #       graph
+    #       |> Scenic.Primitives.rect({width, scene.assigns.args.height},
+    #         id: :blinker,
+    #         fill: scene.assigns.theme.text
+    #       )
+    #     end,
+    #     id: :blinker,
+    #     translate: new_coords
+    #   )
+
+
+
+
+    new_scene = scene
+    |> assign(graph: new_graph)
+    |> push_graph(new_graph)
 
     {:noreply, new_scene}
   end
+
+
+  # def handle_cast({:move, 1}, %{assigns: %{coords: {x_pos, y_pos}}} = scene) do
+  #   # TODo get real char width lol
+  #   new_coords = {x_pos + 19, y_pos}
+
+  #   new_graph =
+  #     scene.assigns.graph
+  #     |> Scenic.Graph.modify(:blinker, &Scenic.Primitives.update_opts(&1, translate: new_coords))
+
+  #   new_scene =
+  #     scene
+  #     |> assign(graph: new_graph)
+  #     |> assign(coords: new_coords)
+  #     |> push_graph(new_graph)
+
+  #   {:noreply, new_scene}
+  # end
 end
 
 #     import Scenic.Primitives,

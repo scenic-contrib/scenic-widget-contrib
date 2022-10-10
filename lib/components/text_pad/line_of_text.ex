@@ -1,8 +1,6 @@
 defmodule ScenicWidgets.TextPad.LineOfText do
     use Scenic.Component
     require Logger
-    # use ScenicWidgets.ScenicEventsDefinitions
-    # alias ScenicWidgets.TextPad.Lib.RenderLib
   
     @default_font :roboto
     @default_font_size 24
@@ -55,7 +53,6 @@ defmodule ScenicWidgets.TextPad.LineOfText do
     end
   
     def handle_cast({:redraw, new_text}, %{assigns: %{args: args}} = scene) do
-      IO.puts "REDRAWIN!!!!"
       ascent = FontMetrics.ascent(args.font.size, args.font.metrics)
 
       new_graph =
@@ -72,20 +69,16 @@ defmodule ScenicWidgets.TextPad.LineOfText do
             )
         end
 
-
         new_scene = scene
         |> assign(graph: new_graph)
         |> assign(text: new_text)
         |> push_graph(new_graph)
-      #TODo don't call render, just cast to all the children.
-  
-      # if we get a block of text, break it up into lines (by newline?)
-  
-      # If we get lines, then send a message to each line of text with the new contents, each line can do nothing if it's unchanged or else update
+
       {:noreply, new_scene}
     end
   
     def y_offset(%{line_num: n, font: %{size: size}}) do
+        # calculate how many line down we need to move this line
        (n-1)*(1.2*size) 
     end
 
