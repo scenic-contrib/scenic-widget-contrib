@@ -52,6 +52,11 @@ defmodule ScenicWidgets.Core.Structs.Frame do
 
   # Make a new frame, with the top-left corner at point `pin`
   def new(pin: {x, y}, size: {w, h}) do
+    IO.puts "DEPRECATE MEEE 88888"
+    new(%{pin: {x, y}, size: {w, h}})
+  end
+
+  def new(%{pin: {x, y}, size: {w, h}}) do
     %__MODULE__{
       pin: {x, y},
       top_left: Coordinates.new(x: x, y: y),
@@ -60,11 +65,12 @@ defmodule ScenicWidgets.Core.Structs.Frame do
     }
   end
 
-  def new(top_left: top_left, dimensions: size) do
-    new(pin: top_left, size: size)
-  end
+  # def new(top_left: {_x, _y} = top_left, dimensions: {_w, _h} = size) do
+  #   new(pin: top_left, size: size)
+  # end
 
   def new(%Scenic.ViewPort{size: {w, h}}, menubar_height: mh) do
+    IO.puts "DEPRECATED MEEEEE 99999"
     %__MODULE__{
       pin: {0, mh},
       top_left: Coordinates.new(x: 0, y: mh),
@@ -73,7 +79,11 @@ defmodule ScenicWidgets.Core.Structs.Frame do
     }
   end
 
-  def center(%__MODULE__{top_left: c, dimensions: d}) do
+  def center(%{top_left: c, dimensions: d}) do
     Coordinates.new(x: c.x + d.width / 2, y: c.y + d.height / 2)
+  end
+
+  def bottom_left(%{pin: {tl_x, tl_y}, size: {w, h}}) do
+    Coordinates.new(x: tl_x, y: tl_y + h)
   end
 end

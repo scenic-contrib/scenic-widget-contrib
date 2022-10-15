@@ -47,20 +47,14 @@ defmodule ScenicWidgets.TextPad.CursorCaret do
   def init(scene, args, opts) do
     Logger.debug("#{__MODULE__} initializing...")
 
-    # {line, col} = args.coords
-
     # NOTE: `color` is not an option for this CursorCaret, even though it is in the Scenic.TextField.Caret component
     theme =
       (opts[:theme] || Scenic.Primitive.Style.Theme.preset(:light))
       |> Scenic.Primitive.Style.Theme.normalize()
 
     width = if args.mode == :block, do: @block_width, else: @cursor_width
-    # width =
-    #   if args.mode in @normal_modes do
-    #     @cursor_width
-    #   end
 
-    IO.inspect args.coords, label: "FIRST COORDS"
+    {x_pos, y_pos} = args.coords
 
     init_graph =
       Scenic.Graph.build()
@@ -73,17 +67,8 @@ defmodule ScenicWidgets.TextPad.CursorCaret do
           )
         end,
         id: :cursor,
-        translate: args.coords
+        translate: {x_pos, y_pos+2} #TODO I like this a little better, moving the cursor down 2
       )
-
-    #       graph =
-    #         Graph.build()
-    #         |> line(
-    #           {{0, @inset_v}, {0, height - @inset_v}},
-    #           stroke: {@width, color},
-    #           hidden: true,
-    #           id: :caret
-    #         )
 
     init_scene =
       scene
@@ -97,48 +82,10 @@ defmodule ScenicWidgets.TextPad.CursorCaret do
     {:ok, init_scene}
   end
 
-  def handle_cast({:move, {x_pos, _y_pos} = new_coords}, scene) do
+  def handle_cast({:move, {x_pos, y_pos} = _new_coords}, scene) do
 
-    # new_coords = 
-    #   {scene.assigns.margin.left + x_pos, scene.assigns.margin.top + (line_num * line_height)}
-
-    # IO.puts "~~~~~MOVIN~~~~~ #{inspect new_coords}"
-    # #TODO pause blinking
     new_graph = scene.assigns.graph
-    |> Scenic.Graph.modify(:cursor, &Scenic.Primitives.update_opts(&1, translate: new_coords))
-
-
-    # new_graph = scene.assigns.graph
-    # |> Scenic.Primitives.update_opts(&1, translate: new_coords)
-
-
-    # # theme =
-    # #   (opts[:theme] || Scenic.Primitive.Style.Theme.preset(:light))
-    # #   |> Scenic.Primitive.Style.Theme.normalize()
-
-    # width = if scene.assigns.args.mode == :block, do: @block_width, else: @cursor_width
-    # # width =
-    # #   if args.mode in @normal_modes do
-    # #     @cursor_width
-    # #   end
-
-
-    # new_graph =
-    #   Scenic.Graph.build()
-    #   |> Scenic.Primitives.group(
-    #     fn graph ->
-    #       graph
-    #       |> Scenic.Primitives.rect({width, scene.assigns.args.height},
-    #         id: :blinker,
-    #         fill: scene.assigns.theme.text
-    #       )
-    #     end,
-    #     id: :blinker,
-    #     translate: new_coords
-    #   )
-
-
-
+    |> Scenic.Graph.modify(:cursor, &Scenic.Primitives.update_opts(&1, translate: {x_pos, y_pos+2})) #TODO I like this a little better, moving the cursor down 2
 
     new_scene = scene
     |> assign(graph: new_graph)
@@ -147,23 +94,6 @@ defmodule ScenicWidgets.TextPad.CursorCaret do
     {:noreply, new_scene}
   end
 
-
-  # def handle_cast({:move, 1}, %{assigns: %{coords: {x_pos, y_pos}}} = scene) do
-  #   # TODo get real char width lol
-  #   new_coords = {x_pos + 19, y_pos}
-
-  #   new_graph =
-  #     scene.assigns.graph
-  #     |> Scenic.Graph.modify(:blinker, &Scenic.Primitives.update_opts(&1, translate: new_coords))
-
-  #   new_scene =
-  #     scene
-  #     |> assign(graph: new_graph)
-  #     |> assign(coords: new_coords)
-  #     |> push_graph(new_graph)
-
-  #   {:noreply, new_scene}
-  # end
 end
 
 #     import Scenic.Primitives,
