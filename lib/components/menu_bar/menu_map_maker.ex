@@ -2,7 +2,7 @@ defmodule ScenicWidgets.MenuBar.MenuMapMaker do
   @doc """
   Return a list of all the zero-arity functions in a module, in
   the correctly formatted list of `{label, function}` tuples for
-  injecting into a GUI.Component.MenuBar menu-map.
+  injecting into a `ScenicWidgets.MenuBar` menu-map.
   """
   def zero_arity_functions("Elixir." <> module_name) when is_bitstring(module_name) do
     # NOTE: Because we automatically add Elixir. to the start of the module
@@ -45,7 +45,7 @@ defmodule ScenicWidgets.MenuBar.MenuMapMaker do
   convention for Elixir modules. Returns a correctly formatted list of
   sub-menus (in the form `{:sub_menu, label, menu}`) and zero-arity
   functions (in the form `{label, function}`) for building sub-menu trees
-  that can be injected into a GUI.Component.MenuBar menu-map.
+  that can be injected into a `ScenicWidgets.MenuBar` menu-map.
 
   To filter from the list of all possible modules, we have to give it
   a string which is what all the modules in the sub-menu tree start with,
@@ -94,7 +94,7 @@ defmodule ScenicWidgets.MenuBar.MenuMapMaker do
     # convert a list like ["Module", "By", "Luke"] to a string, "Module.By.Luke"
     module_name = Enum.reduce(top_item, fn x, acc -> acc <> "." <> x end)
 
-    # NOTE: It's this step which causes the recusrion to bottom-out.
+    # NOTE: It's this step which causes the recursion to bottom-out.
     # the increasing size of the sub-modules means we eventually
     # get an empty list when we filter on items which are a level deeper
     sub_modules =
