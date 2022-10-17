@@ -285,8 +285,9 @@ defmodule ScenicWidgets.TextPad do
     
     line_height = line_height(args)
 
-    {x_pos, line_num} =
-      FontMetrics.position_at(args.text, args.cursor_pos, args.font.size, args.font.metrics)
+    line = Enum.at(args.lines, args.cursor_pos.line-1)
+    {x_pos, _line_num} =
+      FontMetrics.position_at(line, args.cursor_pos.col-1, args.font.size, args.font.metrics)
 
     Scenic.Graph.build()
     |> Scenic.Primitives.group(
@@ -307,7 +308,7 @@ defmodule ScenicWidgets.TextPad do
             # )
             |> ScenicWidgets.TextPad.CursorCaret.add_to_graph(%{
               margin: args.margin,
-              coords: {args.margin.left + x_pos, args.margin.top + (line_num * line_height)},
+              coords: {args.margin.left + x_pos, args.margin.top + ((args.cursor_pos.line-1) * line_height)},
               height: line_height,
               mode: calc_mode(mm)
             }, id: {:cursor, 1})

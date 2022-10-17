@@ -273,9 +273,11 @@ defmodule ScenicWidgets.ScenicEventsDefinitions do
       @arrow_keys [@left_arrow, @right_arrow, @up_arrow, @down_arrow]
 
       @valid_text_input_characters @all_letters ++
-                                     @all_numbers ++
-                                     @all_punctuation ++
-                                     [@space_bar, @enter_key]
+                                   @all_numbers ++
+                                   @all_punctuation ++ [
+                                   @space_bar,
+                                   @enter_key
+                                 ]
 
       @meta_lowercase_s {:key, {:key_s, @key_pressed, [:meta]}}
 
