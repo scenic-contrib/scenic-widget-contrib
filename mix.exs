@@ -24,7 +24,7 @@ defmodule ScenicWidgets.MixProject do
       # {:scenic, "~> 0.11.0-beta.0"},
       {:scenic, git: "https://github.com/JediLuke/scenic", branch: "no_text_wrap"},
       # {:font_metrics, "~> 0.5"},
-      {:font_metrics, git: "https://github.com/JediLuke/font_metrics", branch: "add_line_height_fn", override: true}
+      {:font_metrics, git: "https://github.com/JediLuke/font_metrics"}
     ]
   end
 end
