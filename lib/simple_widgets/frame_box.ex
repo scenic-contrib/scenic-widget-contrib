@@ -3,7 +3,7 @@ defmodule ScenicWidgets.FrameBox do
   FrameBox is a simple component, used during development to quickly
   see what exact space a %Frame{} occupies.
   """
-  use Scenic.Component
+  use Scenic.Component, has_children: false
   require Logger
   alias ScenicWidgets.Core.Structs.Frame
 
