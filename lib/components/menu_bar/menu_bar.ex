@@ -103,7 +103,6 @@ defmodule ScenicWidgets.MenuBar do
 
   def init(scene, args, opts) do
     # Logger.debug("#{__MODULE__} initializing...")
-    # Process.register(self(), __MODULE__)
 
     theme =
       (opts[:theme] || Scenic.Primitive.Style.Theme.preset(:light))
