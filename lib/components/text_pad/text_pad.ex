@@ -9,8 +9,8 @@ defmodule ScenicWidgets.TextPad do
 
    @valid_modes [
       :edit,      # renders a normal cursor, with a thin blinking line
-      :explore,   # renders a block cursor
-      :visual     # allows text highlighting, with a block cursor
+      :explore,   # renders a block cursor, best for reading mode. Also used by normal mode in Vim emulator
+      :annotate   # allows text highlighting, with a block cursor
    ]
 
    defstruct [
@@ -22,23 +22,16 @@ defmodule ScenicWidgets.TextPad do
          line: nil,
          col: nil
       },   
+      # format_opts: %{
+      #   alignment: :left,
+      #   wrap_opts: :no_wrap,
+      #   scroll_opts: :all_directions,
+      #   show_line_num?: true
+      # },
       scroll: nil,            # An accumulator for the amount of scroll
       show_line_num?: false   # toggles the display of line numbers in the left margin
    ]
 
-
-
-            # mode: :insert,
-         # format_opts: %{
-         #   alignment: :left,
-         #   wrap_opts: :no_wrap,
-         #   scroll_opts: :all_directions,
-         #   show_line_num?: true
-         # },
-         # font: radix_state.gui_config.fonts.primary,
-         # cursor: hd(active_buffer.cursors)
-
-         
 
    @doc """
    Builds a new %TextPad{} struct.
@@ -47,9 +40,9 @@ defmodule ScenicWidgets.TextPad do
       %__MODULE__{
          lines: [""],
          mode: :edit,
-         font: Font.default(),
+         font: default_font(),
          margin: default_margin(),
-         cursor: origin_coords(),
+         cursor: %{line: 1, col: 1},
          scroll: {0, 0}
       }
    end
@@ -59,15 +52,7 @@ defmodule ScenicWidgets.TextPad do
       %{base|font: f}
    end
 
-   def default_margin do
-      %{left: 4, top: 0, bottom: 0, right: 4}
-   end
-
-   def origin_coords do
-      %{line: 1, col: 1}
-   end
-
-    def validate(%{frame: %Frame{} = _f, state: %__MODULE__{} = _s} = data)  do
+   def validate(%{frame: %Frame{} = _f, state: %__MODULE__{} = _s} = data)  do
       {:ok, data}
    end
 
@@ -169,7 +154,7 @@ defmodule ScenicWidgets.TextPad do
                         line_num: line_num,
                         name: random_string(),
                         font: scene.assigns.state.font,
-                        frame: calc_line_of_text_frame(scene.assigns.frame, scene.assigns.state.margin, scene.assigns.state.font, line_num),
+                        frame: calc_line_of_text_frame(scene.assigns.frame, scene.assigns.state, line_num),
                         text: text,
                         theme: scene.assigns.theme,
                         }, id: {:line, line_num})
@@ -242,7 +227,7 @@ defmodule ScenicWidgets.TextPad do
       )
    end
 
-   defp draw_background(graph, %{frame: frame, theme: theme}) do
+   def draw_background(graph, %{frame: frame, theme: theme}) do
       graph
       |> Scenic.Primitives.rect(
          {frame.dimens.width, frame.dimens.height},
@@ -253,7 +238,7 @@ defmodule ScenicWidgets.TextPad do
       )
    end
 
-   defp draw_text_area(graph, %{id: id, frame: frame, state: state} = args) do
+   def draw_text_area(graph, %{id: id, frame: frame, state: state} = args) do
       line_height = Font.line_height(state.font)
 
       graph
@@ -273,6 +258,40 @@ defmodule ScenicWidgets.TextPad do
       )
    end
 
+   def draw_lines_of_text(graph, %{frame: frame, state: %{lines: lines, font: font}} = args) do
+      {_total_num_lines, final_graph} =
+         1..Enum.count(lines)
+         |> Enum.map_reduce(graph, fn line_num, graph ->
+            new_graph =
+               graph
+               |> ScenicWidgets.TextPad.LineOfText.add_to_graph(%{
+                  line_num: line_num,
+                  name: random_string(),
+                  font: font,
+                  frame: calc_line_of_text_frame(frame, args.state, line_num),
+                  text: Enum.at(lines, line_num-1),
+                  theme: args.theme,
+               }, id: {:line, line_num})
+      
+            {line_num+1, new_graph}
+         end)
+   
+      final_graph
+   end
+
+   def default_margin do
+      %{left: 4, top: 0, bottom: 0, right: 4}
+   end
+
+   def default_font do
+      name = :roboto
+      %{
+         name: name,
+         size: 24,
+         metrics: Font.font_metrics(name)
+      }
+   end
+
    def calc_cursor_caret_coords(state, line_height) when line_height >= 0 do
       line = Enum.at(state.lines, state.cursor.line-1)
       {x_pos, _line_num} =
@@ -284,33 +303,12 @@ defmodule ScenicWidgets.TextPad do
       }
    end
 
-   defp draw_lines_of_text(graph, %{frame: frame, state: %{lines: lines, font: font}} = args) do
-      {_total_num_lines, final_graph} =
-         1..Enum.count(lines)
-         |> Enum.map_reduce(graph, fn line_num, graph ->
-            new_graph =
-               graph
-               |> ScenicWidgets.TextPad.LineOfText.add_to_graph(%{
-                  line_num: line_num,
-                  name: random_string(),
-                  font: font,
-                  frame: calc_line_of_text_frame(frame, args.state.margin, font, line_num),
-                  text: Enum.at(lines, line_num-1),
-                  theme: args.theme,
-               }, id: {:line, line_num})
-      
-            {line_num+1, new_graph}
-         end)
-   
-      final_graph
-   end
-
-   def calc_line_of_text_frame(frame, %{left: left_margin, top: top_margin} = _margin, font, line_num) do
+   def calc_line_of_text_frame(frame, %{margin: margin, font: font}, line_num) do
       line_height = Font.line_height(font)
       y_offset = (line_num-1)*line_height # how far we need to move this line down, based on what line number it is
       Frame.new(%{
-        pin: {left_margin, top_margin+y_offset},
-        size: {frame.dimens.width, line_height}
+         pin: {margin.left, margin.top+y_offset},
+         size: {frame.dimens.width, line_height}
       })
    end
 
@@ -337,26 +335,26 @@ defmodule ScenicWidgets.TextPad do
 #   end
 
 
-  def calc_font_details(args) do
-    case Map.get(args, :font, :not_found) do
-      %{name: font_name, size: font_size, metrics: %FontMetrics{} = _fm} = provided_details
-      when is_atom(font_name) and is_integer(font_size) ->
-        provided_details
+#   def calc_font_details(args) do
+#     case Map.get(args, :font, :not_found) do
+#       %{name: font_name, size: font_size, metrics: %FontMetrics{} = _fm} = provided_details
+#       when is_atom(font_name) and is_integer(font_size) ->
+#         provided_details
 
-      %{name: font_name, size: custom_font_size}
-      when is_atom(font_name) and is_integer(custom_font_size) ->
-        {:ok, {_type, custom_font_metrics}} = Scenic.Assets.Static.meta(font_name)
-        %{name: font_name, metrics: custom_font_metrics, size: custom_font_size}
+#       %{name: font_name, size: custom_font_size}
+#       when is_atom(font_name) and is_integer(custom_font_size) ->
+#         {:ok, {_type, custom_font_metrics}} = Scenic.Assets.Static.meta(font_name)
+#         %{name: font_name, metrics: custom_font_metrics, size: custom_font_size}
 
-      :not_found ->
-        {:ok, {_type, default_font_metrics}} = Scenic.Assets.Static.meta(@default_font)
-        %{name: @default_font, metrics: default_font_metrics, size: @default_font_size}
+#       :not_found ->
+#         {:ok, {_type, default_font_metrics}} = Scenic.Assets.Static.meta(@default_font)
+#         %{name: @default_font, metrics: default_font_metrics, size: @default_font_size}
 
-      font_name when is_atom(font_name) ->
-        {:ok, {_type, custom_font_metrics}} = Scenic.Assets.Static.meta(font_name)
-        %{name: font_name, metrics: custom_font_metrics, size: @default_font_size}
-    end
-  end
+#       font_name when is_atom(font_name) ->
+#         {:ok, {_type, custom_font_metrics}} = Scenic.Assets.Static.meta(font_name)
+#         %{name: font_name, metrics: custom_font_metrics, size: @default_font_size}
+#     end
+#   end
 
   def random_string do
     # https://dev.to/diogoko/random-strings-in-elixir-e8i

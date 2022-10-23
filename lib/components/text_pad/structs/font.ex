@@ -15,19 +15,6 @@ defmodule ScenicWidgets.TextPad.Structs.Font do
       metrics: nil
    ]
 
-   def default do
-      name = :roboto
-      %{
-         name: name,
-         size: 24,
-         metrics: font_metrics(name)
-      }
-   end
-
-   def font_metrics(font_name) when is_atom(font_name) do
-      {:ok, {Scenic.Assets.Static.Font, font_metrics}} = Scenic.Assets.Static.meta(font_name)
-      font_metrics
-   end
 
    def new(%{
       name: name,
@@ -41,14 +28,19 @@ defmodule ScenicWidgets.TextPad.Structs.Font do
       }
    end
 
+   def font_metrics(font_name) when is_atom(font_name) do
+      {:ok, {Scenic.Assets.Static.Font, font_metrics}} = Scenic.Assets.Static.meta(font_name)
+      font_metrics
+   end
+
    def line_height(args) do
       line_height(@default_line_height_multipler, args)
    end
 
-   def line_height(m, %{font: f}), do: line_height(m, f)
+   def line_height(mx, %{font: f}), do: line_height(mx, f)
 
-   def line_height(m, %{size: font_size}) when is_positive_integer(font_size) do
-     m*font_size
+   def line_height(mx, %{size: font_size}) when is_positive_integer(font_size) do
+     mx*font_size
    end
 
 end
