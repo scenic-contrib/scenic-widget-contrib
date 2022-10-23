@@ -62,8 +62,8 @@ defmodule ScenicWidgets.TextPad.ScrollBar do
     def handle_cast({:scroll_percentage, :horizontal, percentage}, scene) do
         IO.puts "GOT PERCENTAGE #{inspect percentage}"
 
-        h = scene.assigns.frame.dimensions.height
-        w = percentage * scene.assigns.frame.dimensions.width
+        h = scene.assigns.frame.dimens.height
+        w = percentage * scene.assigns.frame.dimens.width
 
         new_graph = scene.assigns.graph
         |> Scenic.Graph.modify(:scroller, &Scenic.Primitives.rectangle(&1, {w, h}))

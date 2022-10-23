@@ -35,7 +35,7 @@ defmodule ScenicWidgets.TextPad.LineOfText do
                     font_size: args.font.size,
                     fill: args.theme.text,
                     # TODO this is what scenic does https://github.com/boydm/scenic/blob/master/lib/scenic/component/input/text_field.ex#L198
-                    translate: {args.frame.top_left.x, args.frame.top_left.y + ascent}
+                    translate: {args.frame.coords.x, args.frame.coords.y + ascent}
                 )
             end
 
@@ -55,7 +55,17 @@ defmodule ScenicWidgets.TextPad.LineOfText do
         {:ok, init_scene}
     end
 
-    # def bounds(%{font: font, frame: %{pin: {top_left_x, top_left_y}, size: {frame_width, height}}} = args, opts) do
+
+          # |> Scenic.Primitives.text(args.text, #TODO change this to lines of text, each line is a new component LineOfText
+      #   id: :text_pad,
+      #   font: args.font.name,
+      #   font_size: args.font.size,
+      #   fill: args.theme.text,
+      #   # TODO this is what scenic does https://github.com/boydm/scenic/blob/master/lib/scenic/component/input/text_field.ex#L198
+      #   translate: {args.margin.left, args.margin.top + ascent - 2} #TODO the -2 just looks good, I dunno
+      # )
+
+    # def bounds(%{font: font, frame: %{pin: {coords_x, coords_y}, size: {frame_width, height}}} = args, opts) do
         
     #     #TODO so fkin dumb but whatever...
     #     {:ok, text} = GenServer.call(String.to_atom(args.name), :get_text)
@@ -71,7 +81,7 @@ defmodule ScenicWidgets.TextPad.LineOfText do
     #     # true_width = if text_width >= frame_width, do: text_width, else: frame_width
     #     # IO.inspect true_width, label: "TW"
     #      # {left, top, right, bottom}
-    #     {top_left_x, top_left_y, top_left_x+text_width, top_left_y+height}
+    #     {coords_x, coords_y, coords_x+text_width, coords_y+height}
     # end
 
     def handle_call(:get_text, _from, scene) do
@@ -97,7 +107,7 @@ defmodule ScenicWidgets.TextPad.LineOfText do
                 fill: args.theme.text,
                 # TODO this is what scenic does https://github.com/boydm/scenic/blob/master/lib/scenic/component/input/text_field.ex#L198
                 # translate: {args.margin.left, args.margin.top + ascent + y_offset(args)}
-                translate: {args.frame.top_left.x, args.frame.top_left.y + ascent}
+                translate: {args.frame.coords.x, args.frame.coords.y + ascent}
             )
         end
 

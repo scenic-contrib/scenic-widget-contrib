@@ -29,6 +29,8 @@ defmodule ScenicWidgets.TextPad.CursorCaret do
   @cursor_width 2
   @block_width 12
 
+  @block_modes [:block, :normal] # these cursors render as a block
+
   # caret blink speed in hertz
   # @caret_hz 0.5
   # @caret_ms trunc(1000 / @caret_hz / 2)
@@ -95,7 +97,7 @@ defmodule ScenicWidgets.TextPad.CursorCaret do
   end
 
   def handle_cast({:mode, new_mode}, scene) do
-    width = if new_mode == :block, do: @block_width, else: @cursor_width
+    width = if new_mode in @block_modes, do: @block_width, else: @cursor_width
 
     new_graph = scene.assigns.graph
     |> Scenic.Graph.modify(:blinker, &Scenic.Primitives.rectangle(&1, {width, scene.assigns.args.height}))
@@ -550,3 +552,68 @@ end
 
 
 # end
+
+
+
+
+
+
+
+
+
+
+
+
+
+#   def handle_blink({graph, %{ref: buf_ref} = state}) do
+#     # IO.puts "BLINK"
+#     new_state =
+#       case state.override? do
+#         :visible ->
+#           %{state|hidden?: false, override?: nil}
+#         :invisible ->
+#           %{state|hidden?: true, override?: nil}
+#         nil ->
+#           %{state|hidden?: not state.hidden?}
+#       end
+
+#     new_graph =
+#       graph
+#       |> Scenic.Graph.modify(
+#                 buf_ref,
+#                 &Scenic.Primitives.update_opts(&1,
+#                                       hidden: new_state.hidden?))
+
+#     {new_graph, new_state}
+#   end
+
+#   def reposition({graph, state}, %{line: l, col: c}) do
+
+#     {start_x, start_y} = state.original_coordinates
+
+#     new_x = start_x + (cursor_box_width()*(c-1)) #REMINDER: we need the -1 here because we starts lines & columns at 1 not zero
+#     new_y = start_y + (cursor_box_height()*(l-1))
+
+#     new_state =
+#       %{state|current_coords: {new_x, new_y}, override?: :visible} # the visual effect is better if you dont blink the cursor when moving it
+
+#     new_graph =
+#       graph |> modify_cursor_position(new_state)
+
+#     {new_graph, new_state}
+#   end
+
+#   def move_cursor({graph, state}, %{instructions: instructions}) do
+
+#     new_coords =
+#         state
+#         |> reposition_cursor(%{move: instructions})
+
+#     new_state =
+#         %{state|current_coords: new_coords, override?: :visible} # the visual effect is better if you dont blink the cursor when moving it
+
+#     new_graph =
+#         graph |> modify_cursor_position(new_state)
+
+#     {new_graph, new_state}
+#   end
