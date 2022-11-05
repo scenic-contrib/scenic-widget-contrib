@@ -7,12 +7,6 @@ defmodule ScenicWidgets.TextPad do
 
    @newline_char "\n"
 
-   @valid_modes [
-      :edit,      # renders a normal cursor, with a thin blinking line
-      :explore,   # renders a block cursor, best for reading mode. Also used by normal mode in Vim emulator
-      :annotate   # allows text highlighting, with a block cursor
-   ]
-
    defstruct [
       lines: nil,             # hold the list of LineOfText structs
       mode: nil,              # affects how we render the cursor
@@ -47,9 +41,12 @@ defmodule ScenicWidgets.TextPad do
       }
    end
 
-   def new(%{font: %Font{} = f}) do
+   def new(%{buffer: %{mode: buf_mode}, font: %Font{} = f}) do
+
       base = new()
-      %{base|font: f}
+
+      # now update the base %TextPad{} with new 
+      %{base|font: f, mode: buf_mode}
    end
 
    def validate(%{frame: %Frame{} = _f, state: %__MODULE__{} = _s} = data)  do
@@ -250,12 +247,19 @@ defmodule ScenicWidgets.TextPad do
                margin: state.margin,
                coords: calc_cursor_caret_coords(state, line_height),
                height: line_height,
-               mode: state.mode,
+               mode: calc_cursor_mode(state.mode),
             }, id: {:cursor, 1})
          end,
          id: {__MODULE__, id, :text_area},
          translate: state.scroll
       )
+   end
+
+   def calc_cursor_mode({:vim, :normal}), do: :block
+   def calc_cursor_mode(m) when m in [:edit, {:vim, :insert}], do: :cursor
+   def calc_cursor_mode(unknown_mode) do
+      IO.puts "~~~ unknown Buf mpde: #{inspect unknown_mode}"
+      raise "unknown cursor mode"
    end
 
    def draw_lines_of_text(graph, %{frame: frame, state: %{lines: lines, font: font}} = args) do
@@ -280,7 +284,7 @@ defmodule ScenicWidgets.TextPad do
    end
 
    def default_margin do
-      %{left: 4, top: 0, bottom: 0, right: 4}
+      %{left: 2, top: 0, bottom: 0, right: 2}
    end
 
    def default_font do

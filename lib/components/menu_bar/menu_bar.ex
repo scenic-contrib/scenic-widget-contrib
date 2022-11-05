@@ -133,7 +133,7 @@ defmodule ScenicWidgets.MenuBar do
       |> assign(theme: theme)
       |> push_graph(init_graph)
 
-    request_input(init_scene, [:cursor_pos, :key])
+    request_input(init_scene, [:cursor_pos, :key]) #TODO maybe this should be done at the higher level too... at least the key inputs
 
     {:ok, init_scene}
   end

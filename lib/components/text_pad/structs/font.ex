@@ -28,6 +28,16 @@ defmodule ScenicWidgets.TextPad.Structs.Font do
       }
    end
 
+   def new(%{
+      name: name,
+      metrics: %FontMetrics{} = metrics
+   }) when is_atom(name) do
+      %__MODULE__{
+         name: name,
+         metrics: metrics
+      }
+   end
+
    def font_metrics(font_name) when is_atom(font_name) do
       {:ok, {Scenic.Assets.Static.Font, font_metrics}} = Scenic.Assets.Static.meta(font_name)
       font_metrics

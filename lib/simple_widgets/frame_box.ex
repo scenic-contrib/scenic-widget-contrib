@@ -44,8 +44,11 @@ defmodule ScenicWidgets.FrameBox do
    @doc """
    This function is static, can be added to any normal graph
    """
-   def draw(graph, %{frame: %Frame{} = frame, color: color}) do
+   def draw(graph, %Frame{} = frame) do
+      draw(graph, frame, %{color: Enum.random(@fill_colors)})
+   end
 
+   def draw(graph, %Frame{} = frame, %{color: color}) do
       # border_stroke = 10
       graph
       |> Scenic.Primitives.group(
@@ -61,5 +64,10 @@ defmodule ScenicWidgets.FrameBox do
             # )
          end
       )
+   end
+
+   def draw(graph, %{frame: %Frame{} = frame, color: color}) do
+      IO.puts "DEPRECTE THIS BAD DRAW FUNC"
+      draw(graph, frame, %{color: color})
    end
 end
