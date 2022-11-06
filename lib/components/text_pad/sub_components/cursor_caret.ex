@@ -26,22 +26,25 @@ defmodule ScenicWidgets.TextPad.CursorCaret do
   #     """
 
   # how wide the cursor is
+  #TODO maybe make this variable?? BLock width should maybe be width of the text??
   @cursor_width 2
   @block_width 12
 
-  @block_modes [:block, :normal] # these cursors render as a block
+  @valid_modes [:cursor, :block]
+  # @block_modes [:block, :normal] # these cursors render as a block
 
   # caret blink speed in hertz
   # @caret_hz 0.5
   # @caret_ms trunc(1000 / @caret_hz / 2)
 
-  def validate(%{coords: _coords, height: _h, mode: _m} = data) do
+  def validate(%{coords: _coords, height: _h, mode: m} = data) when m in @valid_modes do
     Logger.debug("#{__MODULE__} accepted params: #{inspect(data)}")
     {:ok, data}
   end
 
   # def validate(%{coords: num} = data) when is_integer(num) and num >= 0 do
   def validate(%{coords: _coords, height: _h, margin: margin} = data) do
+    Logger.warn "Using a validate path in Cursor which should be DEPRECATED"
     # vim-insert mode by default
     validate(data |> Map.merge(%{mode: :cursor, margin: margin}))
   end
@@ -54,8 +57,6 @@ defmodule ScenicWidgets.TextPad.CursorCaret do
       (opts[:theme] || Scenic.Primitive.Style.Theme.preset(:light))
       |> Scenic.Primitive.Style.Theme.normalize()
 
-    width = if args.mode == :block, do: @block_width, else: @cursor_width
-
     {x_pos, y_pos} = args.coords
 
     init_graph =
@@ -63,7 +64,7 @@ defmodule ScenicWidgets.TextPad.CursorCaret do
       |> Scenic.Primitives.group(
         fn graph ->
           graph
-          |> Scenic.Primitives.rect({width, args.height},
+          |> Scenic.Primitives.rect({calc_width(args.mode), args.height},
             id: :blinker,
             fill: theme.text
           )
@@ -75,9 +76,7 @@ defmodule ScenicWidgets.TextPad.CursorCaret do
     init_scene =
       scene
       |> assign(graph: init_graph)
-      |> assign(args: args) # Lol todo
-      # |> assign(frame: args.frame)
-      # |> assign(coords: args.coords)
+      |> assign(args: args) # TODO lol
       |> assign(theme: theme)
       |> push_graph(init_graph)
 
@@ -97,10 +96,14 @@ defmodule ScenicWidgets.TextPad.CursorCaret do
   end
 
   def handle_cast({:mode, new_mode}, scene) do
-    width = if new_mode in @block_modes, do: @block_width, else: @cursor_width
 
     new_graph = scene.assigns.graph
-    |> Scenic.Graph.modify(:blinker, &Scenic.Primitives.rectangle(&1, {width, scene.assigns.args.height}))
+    |> Scenic.Graph.modify(:blinker, &Scenic.Primitives.rectangle(&1,
+        {
+          calc_width(new_mode),
+          scene.assigns.args.height
+        }
+    ))
 
     new_scene = scene
     |> assign(graph: new_graph)
@@ -108,6 +111,9 @@ defmodule ScenicWidgets.TextPad.CursorCaret do
 
     {:noreply, new_scene}
   end
+
+  def calc_width(:cursor), do: @cursor_width
+  def calc_width(:block), do: @block_width
 
 end
 

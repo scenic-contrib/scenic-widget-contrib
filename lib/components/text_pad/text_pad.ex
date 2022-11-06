@@ -42,10 +42,8 @@ defmodule ScenicWidgets.TextPad do
    end
 
    def new(%{buffer: %{mode: buf_mode}, font: %Font{} = f}) do
-
+      # create a standard buffer & just override the other args
       base = new()
-
-      # now update the base %TextPad{} with new 
       %{base|font: f, mode: buf_mode}
    end
 
@@ -87,85 +85,91 @@ defmodule ScenicWidgets.TextPad do
     {:noreply, scene}
   end
 
-  def handle_cast({:redraw, %{scroll_acc: new_scroll_acc}}, scene) do
+   def handle_cast({:redraw, buffer}, scene) do
 
-    new_graph = scene.assigns.graph |> Scenic.Graph.modify(
-      {__MODULE__, scene.assigns.id, :text_area},
-      &Scenic.Primitives.update_opts(&1, translate: new_scroll_acc)
-    )
+      new_graph =
+         scene.assigns.graph
+         |> scroll_text_area(scene, buffer)
+         |> update_data_and_cursor(scene, buffer)
+         #TODO update new mode aswell
 
-    #TODO cast to scroll bars... make them visible/not visible, adjust position & percentage shown aswell
+      if new_graph == scene.assigns.graph do
+         {:noreply, scene}
+      else
+         new_scene = scene
+         |> assign(graph: new_graph)
+         |> push_graph(new_graph)
 
-    new_scene = scene
-    |> assign(graph: new_graph)
-    |> push_graph(new_graph)
+         {:noreply, new_scene}
+      end
+   end
 
-    {:noreply, new_scene}
-  end
+   #TODO check scroll in the state against new scroll, maybe we can skip this if they haven't changed
+   def scroll_text_area(graph, scene, buffer) do
+      # first update the graph with any scroll updates
+      #TODO cast to scroll bars... make them visible/not visible, adjust position & percentage shown aswell
+      graph
+      |> Scenic.Graph.modify(
+         {__MODULE__, scene.assigns.id, :text_area},
+         &Scenic.Primitives.update_opts(&1, translate: buffer.scroll_acc) #TODO check this
+      )
+   end
 
-   # and is_integer(l) and l >= 1 and is_integer(c) and c >= 1 
-   # NOTE: We need to handle data & cursor updates together, hang on do we??
-   def handle_cast({:redraw, %{data: [l|_rest] = lines_of_text, cursor: cursor}}, scene) when is_bitstring(l) do
-      # cast down to each LineOfText component with the contents of each line,
-      # those components are responsible for computing whether any changes are needed
-
-      state = scene.assigns.state
+   #TODO handle multiple cursors
+   def update_data_and_cursor(graph, %{assigns: %{state: state}} = scene, %{data: [l|_rest] = lines_of_text, cursors: [cursor]}) when is_bitstring(l) do
 
       {final_graph, line_widths} =
          lines_of_text
          |> Enum.with_index(1)
-         |> Enum.reduce({scene.assigns.graph, []}, fn({text, line_num}, {graph, line_widths}) ->
+         |> Enum.reduce({graph, []},
+            fn({text, line_num}, {graph, line_widths}) ->
 
-            # # if this is the line the cursor is on, update the cursor
-            if line_num == cursor.line do
-               {x_pos, _cursor_line_num} =
-                  FontMetrics.position_at(text, cursor.col-1, state.font.size, state.font.metrics)
+               # # if this is the line the cursor is on, update the cursor
+               if line_num == cursor.line do
+                  {x_pos, _cursor_line_num} =
+                     FontMetrics.position_at(text, cursor.col-1, state.font.size, state.font.metrics)
 
-               new_cursor =
-                  {
-                     state.margin.left + x_pos,
-                     state.margin.top + ((cursor.line-1) * Font.line_height(state.font))
-                  }
+                  new_cursor =
+                     {
+                        state.margin.left + x_pos,
+                        state.margin.top + ((cursor.line-1) * Font.line_height(state.font))
+                     }
 
-               {:ok, [pid]} = child(scene, {:cursor, 1})
-               GenServer.cast(pid, {:move, new_cursor})
-               if not is_nil(Map.get(cursor, :mode)) do
-                  GenServer.cast(pid, {:mode, cursor.mode})
+                  {:ok, [pid]} = child(scene, {:cursor, 1})
+                  GenServer.cast(pid, {:move, new_cursor})
+
+                  #TODO this could be cleaner...
+                  if not is_nil(Map.get(cursor, :mode)) do
+                     GenServer.cast(pid, {:mode, cursor.mode})
+                  end
                end
-            end
 
-            line_width =
-               FontMetrics.width(text, state.font.size, state.font.metrics)
+               line_width =
+                  FontMetrics.width(text, state.font.size, state.font.metrics)
 
-            case child(scene, {:line, line_num}) do
-               {:ok, [pid]} ->
-                  GenServer.cast(pid, {:redraw, text})
-                  {graph, line_widths ++ [line_width]}
-               {:ok, []} ->
-                  # need to create a new LineOfText component...
-                  new_graph =
-                     graph
-                     |> Scenic.Graph.add_to({__MODULE__, scene.assigns.id, :text_area}, fn graph ->
+               case child(scene, {:line, line_num}) do
+                  {:ok, [pid]} ->
+                     GenServer.cast(pid, {:redraw, text})
+                     {graph, line_widths ++ [line_width]}
+                  {:ok, []} ->
+                     # need to create a new LineOfText component...
+                     new_graph =
                         graph
-                        |> ScenicWidgets.TextPad.LineOfText.add_to_graph(%{
-                        line_num: line_num,
-                        name: random_string(),
-                        font: scene.assigns.state.font,
-                        frame: calc_line_of_text_frame(scene.assigns.frame, scene.assigns.state, line_num),
-                        text: text,
-                        theme: scene.assigns.theme,
-                        }, id: {:line, line_num})
-                     end)
+                        |> Scenic.Graph.add_to({__MODULE__, scene.assigns.id, :text_area}, fn graph ->
+                           graph
+                           |> ScenicWidgets.TextPad.LineOfText.add_to_graph(%{
+                           line_num: line_num,
+                           name: random_string(),
+                           font: scene.assigns.state.font,
+                           frame: calc_line_of_text_frame(scene.assigns.frame, scene.assigns.state, line_num),
+                           text: text,
+                           theme: scene.assigns.theme,
+                           }, id: {:line, line_num})
+                        end)
 
-                  {new_graph, line_widths ++ [line_width]}
-            end
-         end)
-
-
-      #TODO is this fast enough?? Will it pick up changes fast enough , since they are done asyncronously???
-      # {left, _top, right, _bottom} =
-      #   scene.assigns.graph
-      #   |> Scenic.Graph.bounds()
+                     {new_graph, line_widths ++ [line_width]}
+               end
+            end)
 
       h = length(line_widths) * Font.line_height(scene.assigns.state.font)
 
@@ -177,15 +181,10 @@ defmodule ScenicWidgets.TextPad do
          frame: scene.assigns.frame
       }})
 
-      if final_graph == scene.assigns.graph do
-         {:noreply, scene}
-      else
-         new_scene = scene
-         |> assign(graph: final_graph)
-         |> push_graph(final_graph)
-
-         {:noreply, new_scene}
-      end
+      #TODO is this fast enough?? Will it pick up changes fast enough , since they are done asyncronously???
+      # {left, _top, right, _bottom} =
+      #   scene.assigns.graph
+      #   |> Scenic.Graph.bounds()
 
       # {left, _top, right, _bottom} =
       #   scene.assigns.graph
@@ -208,6 +207,8 @@ defmodule ScenicWidgets.TextPad do
       #     GenServer.cast(pid, {:scroll_percentage, :horizontal, frame_width/text_width})
       #     {:noreply, scene}
       # end
+
+      final_graph
    end
 
    def render(%{id: id, frame: frame, state: _s, theme: _t} = args) do
@@ -364,7 +365,6 @@ defmodule ScenicWidgets.TextPad do
     # https://dev.to/diogoko/random-strings-in-elixir-e8i
     for _ <- 1..10, into: "", do: <<Enum.random('0123456789abcdef')>>
   end
-
 
 end
 
