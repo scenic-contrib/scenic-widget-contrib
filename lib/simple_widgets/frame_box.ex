@@ -45,10 +45,15 @@ defmodule ScenicWidgets.FrameBox do
    This function is static, can be added to any normal graph
    """
    def draw(graph, %Frame{} = frame) do
-      draw(graph, frame, %{color: Enum.random(@fill_colors)})
+      draw(graph, frame, %{fill: Enum.random(@fill_colors)})
    end
 
    def draw(graph, %Frame{} = frame, %{color: color}) do
+      IO.puts "DEPRECATE - use FILL not COLOR"
+      draw(graph, frame, %{fill: color})
+   end
+
+   def draw(graph, %Frame{} = frame, %{fill: color}) do
       # border_stroke = 10
       graph
       |> Scenic.Primitives.group(
@@ -62,6 +67,20 @@ defmodule ScenicWidgets.FrameBox do
             #    # stroke: {border_stroke, color},
             #    translate: frame.pin
             # )
+         end
+      )
+   end
+
+   def draw(graph, %Frame{} = frame, %{border: color}) do
+      border_stroke = 2
+      graph
+      |> Scenic.Primitives.group(
+         fn graph ->
+            graph
+            |> Scenic.Primitives.rect(frame.size,
+               stroke: {border_stroke, color},
+               translate: frame.pin
+            )
          end
       )
    end
