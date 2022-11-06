@@ -95,7 +95,7 @@ defmodule ScenicWidgets.TextPad.CursorCaret do
     {:noreply, new_scene}
   end
 
-  def handle_cast({:mode, new_mode}, scene) do
+  def handle_cast({:set_mode, new_mode}, scene) do
 
     new_graph = scene.assigns.graph
     |> Scenic.Graph.modify(:blinker, &Scenic.Primitives.rectangle(&1,

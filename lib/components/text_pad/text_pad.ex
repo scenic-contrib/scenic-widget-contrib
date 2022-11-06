@@ -91,7 +91,8 @@ defmodule ScenicWidgets.TextPad do
          scene.assigns.graph
          |> scroll_text_area(scene, buffer)
          |> update_data_and_cursor(scene, buffer)
-         #TODO update new mode aswell
+      
+      update_mode(scene, buffer)
 
       if new_graph == scene.assigns.graph do
          {:noreply, scene}
@@ -118,6 +119,10 @@ defmodule ScenicWidgets.TextPad do
    #TODO handle multiple cursors
    def update_data_and_cursor(graph, %{assigns: %{state: state}} = scene, %{data: [l|_rest] = lines_of_text, cursors: [cursor]}) when is_bitstring(l) do
 
+      # NOTE: We have to do data & cursor at the same time, since we need to make sure
+      # data is updated before thec cursor is, since we use the full  text to calculate
+      # the position of the cursor
+
       {final_graph, line_widths} =
          lines_of_text
          |> Enum.with_index(1)
@@ -140,7 +145,7 @@ defmodule ScenicWidgets.TextPad do
 
                   #TODO this could be cleaner...
                   if not is_nil(Map.get(cursor, :mode)) do
-                     GenServer.cast(pid, {:mode, cursor.mode})
+                     GenServer.cast(pid, {:set_mode, cursor.mode})
                   end
                end
 
@@ -209,6 +214,12 @@ defmodule ScenicWidgets.TextPad do
       # end
 
       final_graph
+   end
+
+   #TODO maybe we can skip this if the mode hasn't changed...
+   def update_mode(scene, %{mode: buffer_mode}) do
+      {:ok, [pid]} = child(scene, {:cursor, 1})
+      GenServer.cast(pid, {:set_mode, calc_cursor_mode(buffer_mode)})
    end
 
    def render(%{id: id, frame: frame, state: _s, theme: _t} = args) do
