@@ -38,7 +38,7 @@ defmodule ScenicWidgets.TextPad.CursorCaret do
   # @caret_ms trunc(1000 / @caret_hz / 2)
 
   def validate(%{coords: _coords, height: _h, mode: m} = data) when m in @valid_modes do
-    Logger.debug("#{__MODULE__} accepted params: #{inspect(data)}")
+    #Logger.debug("#{__MODULE__} accepted params: #{inspect(data)}")
     {:ok, data}
   end
 
@@ -50,7 +50,7 @@ defmodule ScenicWidgets.TextPad.CursorCaret do
   end
 
   def init(scene, args, opts) do
-    Logger.debug("#{__MODULE__} initializing...")
+    #Logger.debug("#{__MODULE__} initializing...")
 
     # NOTE: `color` is not an option for this CursorCaret, even though it is in the Scenic.TextField.Caret component
     theme =

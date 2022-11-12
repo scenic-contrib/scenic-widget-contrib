@@ -41,11 +41,57 @@ defmodule ScenicWidgets.TextPad do
       }
    end
 
-   def new(%{buffer: %{mode: buf_mode}, font: %Font{} = f}) do
+   # def new(%{buffer: %{mode: buf_mode}, font: %Font{} = f, margin: margin}) do
+   #    # create a standard buffer & just override the other args
+   #    base = new()
+   #    %{base|font: f, mode: buf_mode, margin: margin}
+   # end
+
+   # def new(%{buffer: %{mode: buf_mode}, font: %Font{} = f}) do
+   #    # create a standard buffer & just override the other args
+   #    base = new()
+   #    %{base|font: f, mode: buf_mode}
+   # end
+
+   def new(%{
+      buffer: %{
+         data: data,
+         mode: buf_mode
+      },
+      font: %Font{} = f,
+      margin: margin
+   }) when is_bitstring(data) and is_map(margin) do
       # create a standard buffer & just override the other args
       base = new()
-      %{base|font: f, mode: buf_mode}
+      %{base|mode: buf_mode, lines: String.split(data, "\n"), margin: margin, font: f}
    end
+
+   #TODO this needs to go, but for now just use it to accept default margin
+   def new(%{
+      buffer: %{
+         data: data,
+         mode: buf_mode
+      },
+      font: %Font{} = f
+   }) when is_bitstring(data) do
+      # create a standard buffer & just override the other args
+      base = new()
+      %{base|mode: buf_mode, lines: String.split(data, "\n"), font: f}
+   end
+
+   # def new(%{
+   #    data: data,
+   #    mode: buf_mode
+   # }) when is_bitstring(data) do
+   #    # create a standard buffer & just override the other args
+   #    base = new()
+   #    %{base|mode: buf_mode, lines: String.split(data, "\n")}
+   # end
+
+
+   # def new(%{data: data}) when is_bitstring(data) do
+   #    raise "here"
+   # end
 
    def validate(%{frame: %Frame{} = _f, state: %__MODULE__{} = _s} = data)  do
       {:ok, data}
