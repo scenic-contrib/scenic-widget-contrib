@@ -42,4 +42,10 @@ defmodule ScenicWidgets.Core.Utils.FlexiFrame do
       calc(vp, {:standard_rule, linemark: linemark, linemark_visible?: false})
    end
 
+   def split(%Frame{pin: {x, y}, size: {w, h}} = frame) do
+      [
+         Frame.new(pin: {x, y}, size: {w/2, h}),
+         Frame.new(pin: {x+(w/2), y}, size: {w/2, h})
+      ]
+   end
  end
