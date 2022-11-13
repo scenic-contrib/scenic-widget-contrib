@@ -26,9 +26,7 @@ defmodule ScenicWidgets.TextPad.CursorCaret do
   #     """
 
   # how wide the cursor is
-  #TODO maybe make this variable?? BLock width should maybe be width of the text??
   @cursor_width 2
-  @block_width 12
 
   @valid_modes [:cursor, :block]
   # @block_modes [:block, :normal] # these cursors render as a block
@@ -64,7 +62,7 @@ defmodule ScenicWidgets.TextPad.CursorCaret do
       |> Scenic.Primitives.group(
         fn graph ->
           graph
-          |> Scenic.Primitives.rect({calc_width(args.mode), args.height},
+          |> Scenic.Primitives.rect({calc_width(args.mode, args.font), args.height},
             id: :blinker,
             fill: theme.text
           )
@@ -100,7 +98,7 @@ defmodule ScenicWidgets.TextPad.CursorCaret do
     new_graph = scene.assigns.graph
     |> Scenic.Graph.modify(:blinker, &Scenic.Primitives.rectangle(&1,
         {
-          calc_width(new_mode),
+          calc_width(new_mode, scene.assigns.args.font),
           scene.assigns.args.height
         }
     ))
@@ -112,8 +110,11 @@ defmodule ScenicWidgets.TextPad.CursorCaret do
     {:noreply, new_scene}
   end
 
-  def calc_width(:cursor), do: @cursor_width
-  def calc_width(:block), do: @block_width
+  def calc_width(:cursor, _font), do: @cursor_width
+  def calc_width(:block, font) do
+    #TODO this isn't gonna work for block fonts... but then again, what is???
+    FontMetrics.width("#", font.size, font.metrics)
+  end
 
 end
 

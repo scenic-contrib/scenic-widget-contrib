@@ -60,9 +60,9 @@ defmodule ScenicWidgets.Core.Structs.Frame do
     }
   end
 
-  # def center(%{top_left: c, dimensions: d}) do
-  #   Coordinates.new(x: c.x + d.width / 2, y: c.y + d.height / 2)
-  # end
+  def center(%{coords: c, dimens: d}) do
+    Coordinates.new(x: c.x + d.width / 2, y: c.y + d.height / 2)
+  end
 
   # def bottom_left(%{pin: {tl_x, tl_y}, size: {w, h}}) do
   #   Coordinates.new(x: tl_x, y: tl_y + h)
