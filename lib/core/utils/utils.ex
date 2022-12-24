@@ -44,5 +44,4 @@ defmodule ScenicWidgets.Utils do
       text
     end
   end
-
 end
