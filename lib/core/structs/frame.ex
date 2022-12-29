@@ -45,8 +45,9 @@ defmodule ScenicWidgets.Core.Structs.Frame do
   #   new(%{pin: {x, y}, size: {w, h}})
   # end
 
-  def new(%Scenic.ViewPort{size: vp_size}) do
-    new(%{pin: {0, 0}, size: vp_size})
+  def new(%Scenic.ViewPort{size: {vp_width, vp_height}}) do
+    #TODO why do we need this +1?? Without it we get a dark strip on the right hand side
+    new(%{pin: {0, 0}, size: {vp_width+1, vp_height}})
   end
 
   def new(pin: pin, size: size), do: new(%{pin: pin, size: size})
