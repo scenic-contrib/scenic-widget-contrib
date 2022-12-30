@@ -11,8 +11,8 @@ defmodule ScenicWidgets.SideNav do
 
 
    def validate(%{
-      frame: %Frame{} = _f,           # The %Frame{} struct describing the rectangular size & placement of the component
-      state: %{nav_tree: _tree}       # A list containing the contents of the Menu, and what functions to call if that item gets clicked on
+      frame: %Frame{} = _f,      # The %Frame{} struct describing the rectangular size & placement of the component
+      state: _nav_tree           # A list containing the contents of the Menu, and what functions to call if that item gets clicked on
    } = data) do
       {:ok, data}
    end
@@ -52,14 +52,21 @@ defmodule ScenicWidgets.SideNav do
       {:noreply, new_scene}
    end
 
-   def handle_cast({:click, {{:leaf, label}, offsets}, func}, scene) do
-      func.()
+   def handle_cast({:click, {:leaf, label, index, click_fn}}, scene) do
+      click_fn.()
       {:noreply, scene}
    end
 
-   def handle_cast({:open_node, node_id}, scene) do
+   def handle_cast({:open_node, index}, scene) do
       
-      IO.puts "CLICK - #{inspect node_id}"
+      IO.puts "OPEN - #{inspect index}"
+   
+      {:noreply, scene}
+   end
+
+   def handle_cast({:close_node, index}, scene) do
+      
+      IO.puts "CLOSE - #{inspect index}"
    
       {:noreply, scene}
    end
@@ -76,7 +83,7 @@ defmodule ScenicWidgets.SideNav do
       )
    end
 
-   def render_file_tree(graph, frame, %{nav_tree: tree} = _state) when is_list(tree) do
+   def render_file_tree(graph, frame, tree) when is_list(tree) do
 
       # length = Enum.count(tree)
 
@@ -116,17 +123,16 @@ defmodule ScenicWidgets.SideNav do
       new_graph = graph
       |> ScenicWidgets.SideNav.Item.add_to_graph(%{
          frame: calc_item_frame(outer_frame, y_offset),
-         state: Map.merge(item, %{
-               offsets: %{
-                  x: x_offset,
-                  y: y_offset
-               },
-               font: font() 
-            })
-         },
-         #TODO item.item? yuck.
-         id: {item.item, [x_offset, y_offset]}
-      )
+         state: %{
+            item: item,
+            offsets: %{
+               x: x_offset,
+               y: y_offset
+            },
+            font: font() 
+         }
+      #TODO use a better id
+      }, id: {item, [x_offset, y_offset]})
       
       # update the last item in the list by incrementing it
       [last_offset|other_reversed_offsets] = Enum.reverse(offsets)
@@ -140,114 +146,6 @@ defmodule ScenicWidgets.SideNav do
       Frame.new(pin: {0, y_offset}, size: {frame_w, @item_height})
    end
 
-   # def do_render_file_tree(graph, frame, [{:node, label, tree_branch}|rest], offsets) do
-   #    # # here we have bottomed-out on a leaf-node, so we just render it
-
-   #    # # the x_offset is how far we move this item to the right, it's a function
-   #    # # of how deep we are in the menu tree, i.e. how many offsets we have
-   #    # x_offset = length(offsets) - 1
-
-   #    # # the y_offset is how far down we move this item, and it's a function
-   #    # # of how many items are above this one in the menu
-   #    # y_offset = Enum.sum(offsets)
-
-   #    # new_graph = graph
-   #    # |> Scenic.Primitives.rect(
-   #    #     {
-   #    #         frame.dimens.width-(x_offset*@item_indent),
-   #    #         @item_height
-   #    #     },
-   #    #     fill: :gray,
-   #    #     translate: {x_offset*@item_indent, y_offset*@item_height}
-   #    # )
-   #    # |> Scenic.Primitives.text(label,
-   #    #     fill: :red,
-   #    #     translate: {x_offset*@item_indent, y_offset*@item_height+ScenicWidgets.TextUtils.v_pos(font)}
-   #    # )
-
-   #    # # update the last item in the list by incrementing it
-   #    # new_offsets = offsets
-
-   #    # do_render_file_tree(new_graph, frame, rest, new_offsets)
-
-   #    IO.puts "IGNORING NODE #{inspect label}"
-   #    do_render_file_tree(graph, frame, rest, offsets)
-   # end
-
-
-   # def do_render_file_tree(graph, frame, [{:leaf, _label} = item|rest] = _tree, offsets) do
-
-
-   #     {new_graph, new_offsets} =
-   #         graph
-   #         |> do_render_file_tree(frame, item, offsets)
-
-   #     do_render_file_tree(new_graph, frame, rest, new_offsets)
-
-   #     # graph
-   #     # |> Scenic.Primitives.group(
-   #     #     fn group_graph ->
-
-   #     #         {final_graph, _final_offset} = 
-   #     #             Enum.reduce(tree, {group_graph, 0}, fn item, {acc_graph, offset} ->
-
-   #     #                 # {:leaf, label} = item
-
-   #     #                 new_graph =
-   #     #                     acc_graph
-   #     #                     |> render_nav_tree_item(item, offset)
-
-   #     #                 {new_graph, offset+1}
-   #     #             end)
-
-   #     #         final_graph
-   #     # #     end,
-   #     # #     id: {:tree_menu, offsets}
-   #     # # )
-   # end
-
-   # def render_nav_tree_item(graph, {:node, item, _sub_items}, offset) when is_bitstring(item) do
-      
-   #     # font = 
-
-   #     graph
-   #     # |> Scenic.Primitives.group(
-   #     #     fn graph ->
-   #     #         graph
-   #     |> Scenic.Primitives.rect({20*offset, 20},
-   #         # id: :background,
-   #         # fill: if(args.hover_highlight?, do: theme.highlight, else: theme.active)
-   #         fill: :yellow,
-   #         t: {200, 100}
-   #     )
-   #     |> Scenic.Primitives.text(item,
-   #         # id: :label,
-   #         # font: args.font.name,
-   #         # font_size: args.font.size,
-   #         translate: {150, (50*offset)+ScenicWidgets.TextUtils.v_pos(font())},
-   #         fill: :red
-   #         # fill: theme.text
-   #     )
-   #     #     end,
-   #     #     # id: {:nav_tree_iterm, args.unique_id},
-   #     #     translate: {72*offset, 0}
-   #     # )
-   # end
-
-   # def render_leaf(graph, {:leaf, label}, offset) when is_bitstring(label) do
-   #     graph
-   #     |> Scenic.Primitives.rect({20*offset, 20},
-   #         # id: :background,
-   #         # fill: if(args.hover_highlight?, do: theme.highlight, else: theme.active)
-   #         fill: :yellow,
-   #         t: {200, 100}
-   #     )
-   #     |> Scenic.Primitives.text(label,
-   #         translate: {150, (50*offset)+ScenicWidgets.TextUtils.v_pos(font)},
-   #         fill: :white
-   #     )
-   # end
-
    defp font do
       {:ok, ibm_plex_mono_metrics} =
          TruetypeMetrics.load("./assets/fonts/IBMPlexMono-Regular.ttf")
@@ -259,4 +157,3 @@ defmodule ScenicWidgets.SideNav do
       }
    end
 end
-  
