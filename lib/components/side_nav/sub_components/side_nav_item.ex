@@ -9,7 +9,7 @@ defmodule ScenicWidgets.SideNav.Item do
   
 
    @item_height 50 # how tall each menu item is #TODO pass it in as a config
-   @item_indent 25 # how far we indent sub-menus
+   @item_indent 32 # how far we indent sub-menus
 
   
    def validate(%{
@@ -97,8 +97,36 @@ defmodule ScenicWidgets.SideNav.Item do
       )
    end
 
-   def render(_frame, %{item: {:node, _label, _sub_menu}} = _state, _theme) do
+   def render(frame, %{item: {:node, label, _sub_menu}} = state, theme) do
+      
+      v_pos = ScenicWidgets.TextUtils.v_pos(state.font)
+
       Scenic.Graph.build()
+      |> Scenic.Primitives.group(
+         fn graph ->
+            graph
+            |> Scenic.Primitives.rect(
+               {
+                  frame.dimens.width-(state.offsets.x*@item_indent),
+                  @item_height
+               },
+               id: :background,
+               fill: theme.active
+            )
+            |> Scenic.Primitives.rect(frame.size,
+               stroke: {1, :black}
+            )
+            |> Scenic.Primitives.rect({32, 32}, fill: {:image, "ionicons/white_32_outline/chevron-forward.png"}, translate: {12, (@item_height-32)/2})
+            |> Scenic.Primitives.text(label,
+               fill: theme.text,
+               font: state.font.name,
+               font_size: state.font.size,
+               translate: {2*@item_indent, (@item_height/2)+v_pos}
+               # translate: {10, ScenicWidgets.TextUtils.v_pos(font)}
+            )
+         end,
+         translate: {state.offsets.x*@item_indent, state.offsets.y*@item_height}
+      )
    end
 
    def handle_input({:cursor_pos, {_x, _y} = coords}, _context, scene) do
@@ -133,7 +161,12 @@ defmodule ScenicWidgets.SideNav.Item do
       bounds = Scenic.Graph.bounds(scene.assigns.graph)
 
       if click_coords |> ScenicWidgets.Utils.inside?(bounds) do
-         cast_parent(scene, {:click, scene.assigns.id, scene.assigns.state.func})
+         case scene.assigns.state do
+            %{item: {:leaf, _label}} ->
+               cast_parent(scene, {:click, scene.assigns.id, scene.assigns.state.func})
+            %{item: {:node, _label, _sub_menu}} ->
+               cast_parent(scene, {:open_node, scene.assigns.id})
+         end
       end
 
       {:noreply, scene}

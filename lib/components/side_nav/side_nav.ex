@@ -57,9 +57,9 @@ defmodule ScenicWidgets.SideNav do
       {:noreply, scene}
    end
 
-   def handle_cast({:click, {{:node, _label, _sub_items}, offsets}}, scene) do
+   def handle_cast({:open_node, node_id}, scene) do
       
-      # IO.puts "CLICK - #{inspect item_id}"
+      IO.puts "CLICK - #{inspect node_id}"
    
       {:noreply, scene}
    end
