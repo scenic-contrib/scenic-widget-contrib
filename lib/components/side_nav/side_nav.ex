@@ -41,7 +41,6 @@ defmodule ScenicWidgets.SideNav do
    end
 
    def handle_cast({:state_change, new_state}, scene) do
-      IO.puts "GOT NEW STATE #{inspect new_state}"
 
       new_graph = render(scene.assigns.frame, new_state)
 
@@ -51,6 +50,18 @@ defmodule ScenicWidgets.SideNav do
       |> push_graph(new_graph)
    
       {:noreply, new_scene}
+   end
+
+   def handle_cast({:click, {{:leaf, label}, offsets}, func}, scene) do
+      func.()
+      {:noreply, scene}
+   end
+
+   def handle_cast({:click, {{:node, _label, _sub_items}, offsets}}, scene) do
+      
+      # IO.puts "CLICK - #{inspect item_id}"
+   
+      {:noreply, scene}
    end
 
    def render(%Frame{} = frame, state) do
@@ -105,19 +116,17 @@ defmodule ScenicWidgets.SideNav do
       new_graph = graph
       |> ScenicWidgets.SideNav.Item.add_to_graph(%{
          frame: calc_item_frame(outer_frame, y_offset),
-         state: %{
-            item: item,
-            offsets: %{
-               x: x_offset,
-               y: y_offset
-            },
-            # label: label,
-            # level: 0,
-            # is_node?: false,
-            # open?: false, 
-            font: font()
-         }
-      }, id: {item, [x_offset, y_offset]})
+         state: Map.merge(item, %{
+               offsets: %{
+                  x: x_offset,
+                  y: y_offset
+               },
+               font: font() 
+            })
+         },
+         #TODO item.item? yuck.
+         id: {item.item, [x_offset, y_offset]}
+      )
       
       # update the last item in the list by incrementing it
       [last_offset|other_reversed_offsets] = Enum.reverse(offsets)

@@ -133,16 +133,16 @@ defmodule ScenicWidgets.SideNav.Item do
       bounds = Scenic.Graph.bounds(scene.assigns.graph)
 
       if click_coords |> ScenicWidgets.Utils.inside?(bounds) do
-         cast_parent(scene, {:click, scene.assigns.state.id})
+         cast_parent(scene, {:click, scene.assigns.id, scene.assigns.state.func})
       end
 
       {:noreply, scene}
    end
   
-   # def handle_input(_input, _context, scene) do
-   #    # Logger.debug "#{__MODULE__} ignoring input: #{inspect input}..."
-   #    {:noreply, scene}
-   # end
+   def handle_input(_input, _context, scene) do
+      # Logger.debug "#{__MODULE__} ignoring input: #{inspect input}..."
+      {:noreply, scene}
+   end
   
 end
   
