@@ -90,6 +90,39 @@ defmodule ScenicWidgets.SideNav.Item do
       )
    end
 
+   def render(frame, %{item: {:open_node, label, index}} = state, theme) do
+      
+      v_pos = ScenicWidgets.TextUtils.v_pos(state.font)
+
+      Scenic.Graph.build()
+      |> Scenic.Primitives.group(
+         fn graph ->
+            graph
+            |> Scenic.Primitives.rect(
+               {
+                  frame.dimens.width-(state.offsets.x*@item_indent),
+                  @item_height
+               },
+               id: :background,
+               # fill: theme.active
+               fill: :red
+            )
+            |> Scenic.Primitives.rect(frame.size,
+               stroke: {1, :black}
+            )
+            |> Scenic.Primitives.rect({32, 32}, fill: {:image, "ionicons/white_32_outline/chevron-forward.png"}, translate: {12, (@item_height-32)/2})
+            |> Scenic.Primitives.text(label,
+               fill: theme.text,
+               font: state.font.name,
+               font_size: state.font.size,
+               translate: {2*@item_indent, (@item_height/2)+v_pos}
+               # translate: {10, ScenicWidgets.TextUtils.v_pos(font)}
+            )
+         end,
+         translate: {state.offsets.x*@item_indent, state.offsets.y*@item_height}
+      )
+   end
+
    def render(frame, %{item: {:closed_node, label, index}} = state, theme) do
       
       v_pos = ScenicWidgets.TextUtils.v_pos(state.font)
@@ -139,8 +172,17 @@ defmodule ScenicWidgets.SideNav.Item do
          {:noreply, new_scene}
       else
 
+         fill_color = 
+            case scene.assigns.state.item do
+               {:open_node, _, _} ->
+                  :red
+               otherwise ->
+                  IO.inspect otherwise
+                  scene.assigns.theme.active
+            end
+
          new_graph = scene.assigns.graph
-         |> Scenic.Graph.modify(:background, &Scenic.Primitives.update_opts(&1, fill: scene.assigns.theme.active))
+         |> Scenic.Graph.modify(:background, &Scenic.Primitives.update_opts(&1, fill: fill_color))
 
          new_scene = scene
          |> assign(graph: new_graph)

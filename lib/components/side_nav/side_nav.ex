@@ -58,9 +58,8 @@ defmodule ScenicWidgets.SideNav do
    end
 
    def handle_cast({:open_node, index}, scene) do
-      
-      IO.puts "OPEN - #{inspect index}"
-   
+      new_state = scene.assigns.state |> open_node(index)
+      GenServer.cast(self(), {:state_change, new_state})
       {:noreply, scene}
    end
 
@@ -144,6 +143,27 @@ defmodule ScenicWidgets.SideNav do
    def calc_item_frame(%{dimens: %{width: frame_w}}, y_offset) do
       # {x_offset*@item_indent, y_offset*@item_height}
       Frame.new(pin: {0, y_offset}, size: {frame_w, @item_height})
+   end
+
+   def open_node(nav_tree, {:closed_node, label, index}) do
+      # node_to_open = {:closed_node, ^label, ^index} = do_extract_node_from_tree(nav_tree, index)
+      do_put_node(nav_tree, {:open_node, label, index}, index)
+   end
+
+   def do_extract_node_from_tree(nav_tree, [ii]) do
+      Enum.at(nav_tree, ii-1)
+   end
+
+   def do_extract_node_from_tree(nav_tree, [ii|rest]) do
+      do_extract_node_from_tree(Enum.at(nav_tree, ii-1), rest)
+   end
+
+   def do_put_node(nav_tree, item, [ii]) do
+      List.update_at(nav_tree, ii-1, fn(_old_item) -> item end)
+   end
+
+   def do_put_node(nav_tree, item, [ii|rest]) do
+      do_put_node(Enum.at(nav_tree, ii-1), item, rest)
    end
 
    defp font do
