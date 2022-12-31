@@ -21,7 +21,7 @@ defmodule ScenicWidgets.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:scenic, "~> 0.11.0-beta.0"},
+      {:scenic, "~> 0.11"},
       {:font_metrics, "~> 0.5"}
     ]
   end
