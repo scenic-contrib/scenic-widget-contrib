@@ -90,7 +90,7 @@ defmodule ScenicWidgets.SideNav.Item do
       )
    end
 
-   def render(frame, %{item: {:open_node, label, index}} = state, theme) do
+   def render(frame, %{item: {:open_node, label, index, sub_tree}} = state, theme) do
       
       v_pos = ScenicWidgets.TextUtils.v_pos(state.font)
 
@@ -116,14 +116,13 @@ defmodule ScenicWidgets.SideNav.Item do
                font: state.font.name,
                font_size: state.font.size,
                translate: {2*@item_indent, (@item_height/2)+v_pos}
-               # translate: {10, ScenicWidgets.TextUtils.v_pos(font)}
             )
          end,
          translate: {state.offsets.x*@item_indent, state.offsets.y*@item_height}
       )
    end
 
-   def render(frame, %{item: {:closed_node, label, index}} = state, theme) do
+   def render(frame, %{item: {:closed_node, label, index, sub_tree}} = state, theme) do
       
       v_pos = ScenicWidgets.TextUtils.v_pos(state.font)
 
@@ -174,7 +173,7 @@ defmodule ScenicWidgets.SideNav.Item do
 
          fill_color = 
             case scene.assigns.state.item do
-               {:open_node, _, _} ->
+               {:open_node, _, _, _sub_tree} ->
                   :red
                otherwise ->
                   IO.inspect otherwise
@@ -199,9 +198,9 @@ defmodule ScenicWidgets.SideNav.Item do
          case scene.assigns.state do
             %{item: {:leaf, _label, index, click_fn} = item} ->
                cast_parent(scene, {:click, item})
-            %{item: {:closed_node, _label, index} = item} ->
+            %{item: {:closed_node, _label, index, _sub_tree} = item} ->
                cast_parent(scene, {:open_node, item})
-            %{item: {:open_node, _label, index} = item} ->
+            %{item: {:open_node, _label, index, _sub_tree} = item} ->
                cast_parent(scene, {:close_node, item})
          end
       end
