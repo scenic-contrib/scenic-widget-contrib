@@ -125,20 +125,12 @@ defmodule ScenicWidgets.TextPad do
    end
 
    def draw_text_area(graph, %{id: id, frame: frame, state: state} = args) do
-      line_height = Font.line_height(state.font)
-
       graph
       |> Scenic.Primitives.group(
          fn graph ->
             graph
             |> draw_lines_of_text(args)
-            |> ScenicWidgets.TextPad.CursorCaret.add_to_graph(%{
-               margin: state.margin,
-               coords: calc_cursor_caret_coords(state, line_height),
-               height: line_height,
-               font: state.font,
-               mode: calc_cursor_mode(state.mode),
-            }, id: {:cursor, 1})
+            |> draw_cursor(args)
          end,
          id: {__MODULE__, id, :text_area},
          translate: state.opts.scroll.acc
@@ -164,6 +156,24 @@ defmodule ScenicWidgets.TextPad do
          end)
    
       final_graph
+   end
+
+   def draw_cursor(graph, %{state: %{mode: :read_only}}) do
+      # no cursors in read-only mode...
+      graph
+   end
+
+   def draw_cursor(graph, %{state: state}) do
+      line_height = Font.line_height(state.font)
+
+      graph
+      |> ScenicWidgets.TextPad.CursorCaret.add_to_graph(%{
+         margin: state.margin,
+         coords: calc_cursor_caret_coords(state, line_height),
+         height: line_height,
+         font: state.font,
+         mode: calc_cursor_mode(state.mode),
+      }, id: {:cursor, 1})
    end
 
    def update_data(graph, scene, %{data: [l|_rest] = lines_of_text}) when is_bitstring(l) do
@@ -278,14 +288,16 @@ defmodule ScenicWidgets.TextPad do
       )
    end
 
-   def calc_cursor_mode({:vim, :normal}), do: :block
-   def calc_cursor_mode(m) when m in [:edit, {:vim, :insert}], do: :cursor
-   def calc_cursor_mode(unknown_mode) do
-      IO.puts "~~~ unknown Buf mpde: #{inspect unknown_mode}"
-      raise "unknown cursor mode"
+   def calc_cursor_mode({:vim, :normal}) do
+      :block
    end
 
-   
+   def calc_cursor_mode(m) when m in [
+      :edit,
+      {:vim, :insert}
+   ] do
+      :cursor
+   end
 
    def calc_cursor_caret_coords(state, line_height) when line_height >= 0 do
       line = Enum.at(state.lines, state.cursor.line-1)
