@@ -24,7 +24,7 @@ to your deps in mix.exs
 
 A nested menu at the top of the screen:
 
-![MenuBar Screenshot](./lib/components/menu_bar/extra/menu_bar_screenshot.png)
+![MenuBar Screenshot](./lib/components/menu_bar/screenshots/menu_bar_screenshot.png)
 
 ### FrameBox
 

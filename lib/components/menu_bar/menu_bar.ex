@@ -103,7 +103,6 @@ defmodule ScenicWidgets.MenuBar do
 
   def init(scene, args, opts) do
     # Logger.debug("#{__MODULE__} initializing...")
-    Process.register(self(), __MODULE__)
 
     theme =
       (opts[:theme] || Scenic.Primitive.Style.Theme.preset(:light))
@@ -134,7 +133,7 @@ defmodule ScenicWidgets.MenuBar do
       |> assign(theme: theme)
       |> push_graph(init_graph)
 
-    request_input(init_scene, [:cursor_pos, :key])
+    request_input(init_scene, [:cursor_pos, :key]) #TODO maybe this should be done at the higher level too... at least the key inputs
 
     {:ok, init_scene}
   end
@@ -188,7 +187,7 @@ defmodule ScenicWidgets.MenuBar do
       # normal float button
       {_label, action} ->
         action.()
-        GenServer.cast(__MODULE__, {:cancel, scene.assigns.state.mode})
+        GenServer.cast(self(), {:cancel, scene.assigns.state.mode})
         {:noreply, scene}
 
       {:sub_menu, _label, _menu_contents} ->
@@ -289,7 +288,7 @@ defmodule ScenicWidgets.MenuBar do
 
   def handle_input(@escape_key, _context, scene) do
     # Logger.debug("#{__MODULE__} cancelling due to ESCAPE KEY !!")
-    GenServer.cast(__MODULE__, {:cancel, scene.assigns.state.mode})
+    GenServer.cast(self(), {:cancel, scene.assigns.state.mode})
     {:noreply, scene}
   end
 
@@ -325,7 +324,7 @@ defmodule ScenicWidgets.MenuBar do
 
   defp render_main_menu_bar(graph, %{
          state: state,
-         frame: frame = %{size: {width, height}},
+         frame: frame = %{dimens: %{width: width, height: height}},
          theme: theme
        }) do
     # strip out all the top-level menu item labels & give them a number
@@ -357,7 +356,7 @@ defmodule ScenicWidgets.MenuBar do
   defp do_render_main_menu_bar(
          graph,
          state = %{mode: mode, item_width: {:fixed, menu_width}},
-         frame = %{size: {_width, height}},
+         frame = %{dimens: %{height: height}},
          theme,
          [{label, item_num} | rest_menu_map]
        ) do
@@ -476,7 +475,7 @@ defmodule ScenicWidgets.MenuBar do
             stroke: {2, args.theme.border},
             translate: {
               (top_hover_index - 1) * menu_item_width + offsets.x * args.sub_menu_width,
-              args.frame.dimensions.height + offsets.y * args.state.sub_menu.height
+              args.frame.dimens.height + offsets.y * args.state.sub_menu.height
             }
           )
           # NOTE: This next line draw a "black" (or whatever color our menu bar background is)
@@ -490,7 +489,7 @@ defmodule ScenicWidgets.MenuBar do
           |> Scenic.Primitives.line(
             {{if(top_hover_index == 1, do: 0, else: -2), 0}, {args.sub_menu_width + 2, 0}},
             stroke: {2, args.theme.active},
-            translate: {menu_item_width * (top_hover_index - 1), args.frame.dimensions.height}
+            translate: {menu_item_width * (top_hover_index - 1), args.frame.dimens.height}
           )
         end,
         id: {:dropdown, sub_menu_index}
@@ -507,7 +506,7 @@ defmodule ScenicWidgets.MenuBar do
     menu_item_frame = %{
       pin: {
         (top_hover_index - 1) * menu_item_width + args.offsets.x * args.sub_menu_width,
-        args.frame.dimensions.height +
+        args.frame.dimens.height +
           (args.item_index - 1 + args.offsets.y) * args.state.sub_menu.height
       },
       size: {args.sub_menu_width, args.state.sub_menu.height}
