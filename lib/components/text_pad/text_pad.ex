@@ -7,107 +7,53 @@ defmodule ScenicWidgets.TextPad do
 
    @newline_char "\n"
 
+   #TODO handle mutiple cursors
+
    defstruct [
-      lines: nil,             # hold the list of LineOfText structs
-      mode: nil,              # affects how we render the cursor
-      font: nil,              # the font settings for this TextPad   
-      margin: nil,            # how much margin we want to leave around the edges
-      cursor: %{              # maintains the cursor coords, note we just support single-cursor for now
+      mode: nil,                 # affects how we render the cursor
+      font: nil,                 # the font settings for this TextPad   
+      lines: nil,                # hold the list of LineOfText structs
+      margin: nil,               # how much margin we want to leave around the edges
+      cursor: %{                 # maintains the cursor coords, note we just support single-cursor for now
          line: nil,
          col: nil
-      },   
-      # format_opts: %{
-      #   alignment: :left,
-      #   wrap_opts: :no_wrap,
-      #   scroll_opts: :all_directions,
-      #   show_line_num?: true
-      # },
-      scroll: nil,            # An accumulator for the amount of scroll
-      show_line_num?: false   # toggles the display of line numbers in the left margin
+      },
+      opts: %{
+         alignment: :left,
+         wrap: :no_wrap,
+         scroll: %{
+            direction: :all,
+            acc: {0, 0}          # An accumulator for the amount of scroll
+         },
+         show_line_nums?: false  # toggles the display of line numbers in the left margin
+      }
    ]
 
 
-   @doc """
-   Builds a new %TextPad{} struct.
-   """
-   def new do
-      %__MODULE__{
-         lines: [""],
-         mode: :edit,
-         font: default_font(),
-         margin: default_margin(),
-         cursor: %{line: 1, col: 1},
-         scroll: {0, 0}
-      }
-   end
+   defdelegate new(), to: ScenicWidgets.TextPad.Utils
+   defdelegate new(args), to: ScenicWidgets.TextPad.Utils
 
-   # def new(%{buffer: %{mode: buf_mode}, font: %Font{} = f, margin: margin}) do
-   #    # create a standard buffer & just override the other args
-   #    base = new()
-   #    %{base|font: f, mode: buf_mode, margin: margin}
-   # end
-
-   # def new(%{buffer: %{mode: buf_mode}, font: %Font{} = f}) do
-   #    # create a standard buffer & just override the other args
-   #    base = new()
-   #    %{base|font: f, mode: buf_mode}
-   # end
-
-   def new(%{
-      buffer: %{
-         data: data,
-         mode: buf_mode,
-         cursors: [cursor] #TODO handle multiple cursors
-      },
-      font: %Font{} = f,
-      margin: margin
-   }) when is_bitstring(data) and is_map(margin) do
-      # create a standard buffer & just override the other args
-      base = new()
-      %{base|mode: buf_mode, lines: String.split(data, "\n"), margin: margin, font: f, cursor: cursor}
-   end
-
-   #TODO this needs to go, but for now just use it to accept default margin
-   def new(%{
-      buffer: %{
-         data: data,
-         mode: buf_mode,
-         cursors: [cursor] #TODO handle multiple cursors
-      },
-      font: %Font{} = f
-   }) when is_bitstring(data) do
-      # create a standard buffer & just override the other args
-      base = new()
-      %{base|mode: buf_mode, lines: String.split(data, "\n"), font: f, cursor: cursor}
-   end
-
-   # def new(%{
-   #    data: data,
-   #    mode: buf_mode
-   # }) when is_bitstring(data) do
-   #    # create a standard buffer & just override the other args
-   #    base = new()
-   #    %{base|mode: buf_mode, lines: String.split(data, "\n")}
-   # end
-
-
-   # def new(%{data: data}) when is_bitstring(data) do
-   #    raise "here"
-   # end
 
    def validate(%{frame: %Frame{} = _f, state: %__MODULE__{} = _s} = data)  do
       {:ok, data}
    end
 
    def init(scene, args, opts) do
-      Logger.debug("#{__MODULE__} initializing...")
+
+      id = opts[:id] || raise "#{__MODULE__} must receive `id` via opts."
 
       init_theme = ScenicWidgets.Utils.Theme.get_theme(opts)
-      init_graph = render(args |> Map.merge(%{id: opts[:id], theme: init_theme}))
+
+      init_graph = render(%{
+         id: id,
+         frame: args.frame,
+         theme: init_theme,
+         state: args.state
+      })
 
       init_scene =
          scene
-         |> assign(id: opts[:id] || raise "No ID provided")
+         |> assign(id: id)
          |> assign(theme: init_theme)
          |> assign(frame: args.frame)
          |> assign(state: args.state)
@@ -120,18 +66,17 @@ defmodule ScenicWidgets.TextPad do
    #TODO handle_update, in such a way that we just go through init/3 again, but
    # without needing to spin up sub-processes.... eliminate all the extra handle_cast logic
 
-  def handle_cast({:redraw, %{data: nil} = args}, scene) do
-    lines = [""]
-    GenServer.cast(self(), {:redraw, Map.put(args, :data, lines)})
-    {:noreply, scene}
-  end
+   def handle_cast({:redraw, %{data: nil} = args}, scene) do
+      lines = [""]
+      GenServer.cast(self(), {:redraw, Map.put(args, :data, lines)})
+      {:noreply, scene}
+   end
 
-  def handle_cast({:redraw, %{data: text} = args}, scene) when is_bitstring(text) do
-    Logger.debug "converting text input to list of lines..."
-    lines = String.split(text, @newline_char)
-    GenServer.cast(self(), {:redraw, Map.put(args, :data, lines)})
-    {:noreply, scene}
-  end
+   def handle_cast({:redraw, %{data: text} = args}, scene) when is_bitstring(text) do
+      lines = String.split(text, @newline_char)
+      GenServer.cast(self(), {:redraw, Map.put(args, :data, lines)})
+      {:noreply, scene}
+   end
 
    def handle_cast({:redraw, buffer}, scene) do
 
@@ -168,6 +113,59 @@ defmodule ScenicWidgets.TextPad do
       )
    end
 
+   def draw_background(graph, %{frame: frame, theme: theme}) do
+      graph
+      |> Scenic.Primitives.rect(
+         {frame.dimens.width, frame.dimens.height},
+         id: :background,
+         fill: theme.active,
+         stroke: {2, theme.border},
+         scissor: frame.dimens.box
+      )
+   end
+
+   def draw_text_area(graph, %{id: id, frame: frame, state: state} = args) do
+      line_height = Font.line_height(state.font)
+
+      graph
+      |> Scenic.Primitives.group(
+         fn graph ->
+            graph
+            |> draw_lines_of_text(args)
+            |> ScenicWidgets.TextPad.CursorCaret.add_to_graph(%{
+               margin: state.margin,
+               coords: calc_cursor_caret_coords(state, line_height),
+               height: line_height,
+               font: state.font,
+               mode: calc_cursor_mode(state.mode),
+            }, id: {:cursor, 1})
+         end,
+         id: {__MODULE__, id, :text_area},
+         translate: state.opts.scroll.acc
+      )
+   end
+
+   def draw_lines_of_text(graph, %{frame: frame, state: %{lines: lines, font: font}} = args) do
+      {_total_num_lines, final_graph} =
+         1..Enum.count(lines)
+         |> Enum.map_reduce(graph, fn line_num, graph ->
+            new_graph =
+               graph
+               |> ScenicWidgets.TextPad.LineOfText.add_to_graph(%{
+                  line_num: line_num,
+                  name: random_string(),
+                  font: font,
+                  frame: calc_line_of_text_frame(frame, args.state, line_num),
+                  text: Enum.at(lines, line_num-1),
+                  theme: args.theme,
+               }, id: {:line, line_num})
+      
+            {line_num+1, new_graph}
+         end)
+   
+      final_graph
+   end
+
    def update_data(graph, scene, %{data: [l|_rest] = lines_of_text}) when is_bitstring(l) do
 
       final_graph =
@@ -199,14 +197,6 @@ defmodule ScenicWidgets.TextPad do
 
       final_graph
    end
-
-   #TODO handle mutiple cursors
-
-   #TODO maybe we can skip this if the mode hasn't changed...
-   # def update_mode(scene, %{mode: buffer_mode}) do
-   #    {:ok, [pid]} = child(scene, {:cursor, 1})
-   #    GenServer.cast(pid, {:set_mode, calc_cursor_mode(buffer_mode)})
-   # end
 
    def update_cursor(graph, %{assigns: %{state: state}} = scene, %{data: lines, cursors: [cursor], mode: buffer_mode}) do
 
@@ -288,38 +278,6 @@ defmodule ScenicWidgets.TextPad do
       )
    end
 
-   def draw_background(graph, %{frame: frame, theme: theme}) do
-      graph
-      |> Scenic.Primitives.rect(
-         {frame.dimens.width, frame.dimens.height},
-         id: :background,
-         fill: theme.active,
-         stroke: {2, theme.border},
-         scissor: frame.dimens.box
-      )
-   end
-
-   def draw_text_area(graph, %{id: id, frame: frame, state: state} = args) do
-      line_height = Font.line_height(state.font)
-
-      graph
-      |> Scenic.Primitives.group(
-         fn graph ->
-            graph
-            |> draw_lines_of_text(args)
-            |> ScenicWidgets.TextPad.CursorCaret.add_to_graph(%{
-               margin: state.margin,
-               coords: calc_cursor_caret_coords(state, line_height),
-               height: line_height,
-               font: state.font,
-               mode: calc_cursor_mode(state.mode),
-            }, id: {:cursor, 1})
-         end,
-         id: {__MODULE__, id, :text_area},
-         translate: state.scroll
-      )
-   end
-
    def calc_cursor_mode({:vim, :normal}), do: :block
    def calc_cursor_mode(m) when m in [:edit, {:vim, :insert}], do: :cursor
    def calc_cursor_mode(unknown_mode) do
@@ -327,39 +285,7 @@ defmodule ScenicWidgets.TextPad do
       raise "unknown cursor mode"
    end
 
-   def draw_lines_of_text(graph, %{frame: frame, state: %{lines: lines, font: font}} = args) do
-      {_total_num_lines, final_graph} =
-         1..Enum.count(lines)
-         |> Enum.map_reduce(graph, fn line_num, graph ->
-            new_graph =
-               graph
-               |> ScenicWidgets.TextPad.LineOfText.add_to_graph(%{
-                  line_num: line_num,
-                  name: random_string(),
-                  font: font,
-                  frame: calc_line_of_text_frame(frame, args.state, line_num),
-                  text: Enum.at(lines, line_num-1),
-                  theme: args.theme,
-               }, id: {:line, line_num})
-      
-            {line_num+1, new_graph}
-         end)
    
-      final_graph
-   end
-
-   def default_margin do
-      %{left: 2, top: 0, bottom: 0, right: 2}
-   end
-
-   def default_font do
-      name = :roboto
-      %{
-         name: name,
-         size: 24,
-         metrics: Font.font_metrics(name)
-      }
-   end
 
    def calc_cursor_caret_coords(state, line_height) when line_height >= 0 do
       line = Enum.at(state.lines, state.cursor.line-1)
