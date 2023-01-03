@@ -32,6 +32,7 @@ defmodule ScenicWidgets.TextPad do
 
    defdelegate new(), to: ScenicWidgets.TextPad.Utils
    defdelegate new(args), to: ScenicWidgets.TextPad.Utils
+   defdelegate backspace(lines_of_text, cursor, x, position), to: ScenicWidgets.TextPad.Utils
 
 
    def validate(%{frame: %Frame{} = _f, state: %__MODULE__{} = _s} = data)  do
