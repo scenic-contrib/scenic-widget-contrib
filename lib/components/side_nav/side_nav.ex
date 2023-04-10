@@ -65,6 +65,7 @@ defmodule ScenicWidgets.SideNav do
    end
 
    def handle_cast({:close_node, index}, scene) do
+      IO.puts "CLOSING NODE #{inspect index}"
       new_state = scene.assigns.state |> close_node(index)
       GenServer.cast(self(), {:state_change, new_state})
       {:noreply, scene}
@@ -194,21 +195,6 @@ defmodule ScenicWidgets.SideNav do
             {node, label, index, new_sub_tree}
       end)
    end
-
-   # def do_put_node({node, label, index, sub_tree}, item, [ii] = _index) when is_list(sub_tree) do
-   #    new_sub_tree = List.update_at(sub_tree, ii-1, fn(_old_item) -> item end)
-   #    IO.inspect new_sub_tree, label: "LAST SUB TREE"
-   #    {node, label, index, new_sub_tree}
-   # end
-
-   # def do_put_node({node, label, index, sub_tree}, item, [ii|rest] = _index) when is_list(sub_tree) do
-   #    new_sub_tree = List.update_at(sub_tree, ii-1, fn
-   #       {inner_node, inner_label, inner_index, inner_sub_tree} ->
-   #          new_inner_sub_tree = do_put_node(inner_sub_tree, item, rest)
-   #          {inner_node, inner_label, inner_index, new_inner_sub_tree}
-   #    end)
-   #    {node, label, index, new_sub_tree}
-   # end
 
    defp font do
       {:ok, ibm_plex_mono_metrics} =

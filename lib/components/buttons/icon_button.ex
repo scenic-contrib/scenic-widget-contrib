@@ -1,10 +1,10 @@
-defmodule ScenicWidgets.TextButton do
+defmodule ScenicWidgets.IconButton do
     use Scenic.Component
     require Logger
   
-    def validate(%{frame: _frame, text: _t, font: _font} = data) do
+    def validate(data) do
         #TODO good validation
-        {:ok, data |> Map.merge(%{hover_highlight?: false})}
+        {:ok, data}
     end
   
     def init(scene, args, opts) do
@@ -47,10 +47,10 @@ defmodule ScenicWidgets.TextButton do
     end
   
     def render(id, args, theme) do
-      {width, height} = args.frame.size
+    #   {width, height} = args.frame.size
   
       # https://github.com/boydm/scenic/blob/master/lib/scenic/component/button.ex#L200
-      vpos = height / 2 + args.font.ascent / 2 + args.font.descent / 3
+    #   vpos = height / 2 + args.font.ascent / 2 + args.font.descent / 3
   
         # id = opts[:id] || raise "#{__MODULE__} must receive `id` via opts."
 
@@ -60,16 +60,21 @@ defmodule ScenicWidgets.TextButton do
             graph
             |> Scenic.Primitives.rect(args.frame.size,
               id: :background,
-              fill: if(args.hover_highlight?, do: theme.highlight, else: theme.active)
+            #   fill: if(args.hover_highlight?, do: theme.highlight, else: theme.active)
+              fill: if(args.hover_highlight?, do: theme.highlight, else: :green)
             )
-            |> Scenic.Primitives.text(args.text,
-              font: args.font.name,
-              font_size: args.font.size,
-              translate: {5, vpos}, # TODO get margin from somewhere
-              fill: theme.text
-            )
+            # graph
+            # |> Scenic.Primitives.rect({32, 32}, fill: {:image, "ionicons_32_black/add.png"}, translate: {(50-32)/2, (50-32)/2}) 
+            |> ScenicWidgets.Ionicons.Black32.plus()
+            # |> Scenic.Primitives.text(args.label,
+            #   id: :label,
+            #   font: args.font.name,
+            #   font_size: args.font.size,
+            #   translate: {args.margin, vpos},
+            #   fill: theme.text
+            # )
           end,
-          id: {:text_button, id},
+          id: {:icon_button, id},
           translate: args.frame.pin
         )
     end
@@ -121,12 +126,13 @@ defmodule ScenicWidgets.TextButton do
         #   |> Scenic.Graph.modify(:background, &Scenic.Primitives.update_opts(&1, fill: scene.assigns.theme.active))
           |> Scenic.Graph.modify(:background, &Scenic.Primitives.update_opts(&1, fill: :green))
   
-          new_scene = scene
-            |> assign(graph: new_graph)
-            # |> assign(frame: args.frame)
-            # |> assign(theme: theme)
-            |> assign(state: %{mode: :inactive})
-            |> push_graph(new_graph)
+          new_scene =
+          scene
+          |> assign(graph: new_graph)
+          # |> assign(frame: args.frame)
+          # |> assign(theme: theme)
+          |> assign(state: %{mode: :inactive})
+          |> push_graph(new_graph)
   
           {:noreply, new_scene}
         end

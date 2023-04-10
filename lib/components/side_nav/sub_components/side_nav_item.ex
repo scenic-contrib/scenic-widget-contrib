@@ -176,7 +176,7 @@ defmodule ScenicWidgets.SideNav.Item do
                {:open_node, _, _, _sub_tree} ->
                   :red
                otherwise ->
-                  IO.inspect otherwise
+                  # IO.inspect otherwise
                   scene.assigns.theme.active
             end
 

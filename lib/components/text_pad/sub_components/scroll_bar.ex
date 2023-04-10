@@ -6,13 +6,13 @@ defmodule ScenicWidgets.TextPad.ScrollBar do
     @valid_orientations [:horizontal, :vertical]
   
     def validate(%{frame: %Frame{} = _frame, orientation: o, position: _pos} = data) when o in @valid_orientations do
-      Logger.debug("#{__MODULE__} accepted params: #{inspect(data)}")
+      # Logger.debug("#{__MODULE__} accepted params: #{inspect(data)}")
       {:ok, data}
     end
   
   
     def init(scene, args, opts) do
-      Logger.debug("#{__MODULE__} initializing...")
+      # Logger.debug("#{__MODULE__} initializing...")
   
       theme =
         (opts[:theme] || Scenic.Primitive.Style.Theme.preset(:light))

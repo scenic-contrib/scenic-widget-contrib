@@ -32,7 +32,7 @@ defmodule ScenicWidgets.TextPad do
 
    defdelegate new(), to: ScenicWidgets.TextPad.Utils
    defdelegate new(args), to: ScenicWidgets.TextPad.Utils
-   defdelegate backspace(lines_of_text, cursor, x, position), to: ScenicWidgets.TextPad.Utils
+   # defdelegate backspace(lines_of_text, cursor, x, position), to: ScenicWidgets.TextPad.Utils
 
 
    def validate(%{frame: %Frame{} = _f, state: %__MODULE__{} = _s} = data)  do
@@ -209,13 +209,16 @@ defmodule ScenicWidgets.TextPad do
       final_graph
    end
 
+   #TODO use insert_text_at_cursor
    def update_cursor(graph, %{assigns: %{state: state}} = scene, %{data: lines, cursors: [cursor], mode: buffer_mode}) do
 
       line_of_text = Enum.at(lines, cursor.line-1)
 
       #TODO this might be more relevent when we get to wrapping...
       {x_pos, _cursor_line_num} =
+         #TODO this can crash if we delete a line of text somehow
          FontMetrics.position_at(line_of_text, cursor.col-1, state.font.size, state.font.metrics)
+
 
       new_cursor =
          {

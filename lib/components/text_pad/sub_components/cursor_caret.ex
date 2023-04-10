@@ -116,6 +116,7 @@ defmodule ScenicWidgets.TextPad.CursorCaret do
     FontMetrics.width("#", font.size, font.metrics)
   end
 
+  #TODO deprecate!?!?
   def move_cursor(%{line: _l, col: c} = cursor, {:columns_right, x}) do
     cursor |> Map.merge%{col: c+x}
   end

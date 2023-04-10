@@ -3,12 +3,12 @@ defmodule ScenicWidgets.TestPattern do
   require Logger
 
   def validate(data) do
-    Logger.debug("#{__MODULE__} accepted params: #{inspect(data)}")
+    # Logger.debug("#{__MODULE__} accepted params: #{inspect(data)}")
     {:ok, data}
   end
 
   def init(scene, _args, _opts) do
-    Logger.debug("#{__MODULE__} initializing...")
+    # Logger.debug("#{__MODULE__} initializing...")
 
     rect_size = {80, 80}
 
