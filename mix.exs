@@ -24,6 +24,8 @@ defmodule ScenicWidgets.MixProject do
       {:scenic, "~> 0.11.0-beta.0"},
       # {:scenic, git: "https://github.com/JediLuke/scenic", branch: "no_text_wrap"},
       {:font_metrics, "~> 0.5"},
+      {:ex_doc, "~> 0.25", only: :dev},
+      {:earmark, "~> 1.4", only: :dev},
       {:stream_data, "~> 0.5", only: :test}
     ]
   end
