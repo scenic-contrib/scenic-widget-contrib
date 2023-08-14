@@ -57,11 +57,18 @@ defmodule Widgex.Structs.Frame do
 
   """
   @spec new(Coordinates.t(), Dimensions.t()) :: t()
-  def new(pin \\ %Coordinates{x: 0, y: 0}, size \\ %Dimensions{width: nil, height: nil}) do
+  def new(
+        %Coordinates{} = pin \\ %Coordinates{x: 0, y: 0},
+        %Dimensions{} = size \\ %Dimensions{width: nil, height: nil}
+      ) do
     %__MODULE__{
       pin: pin,
       size: size
     }
+  end
+
+  def new({x, y}, {w, h}) do
+    new(%Coordinates{x: x, y: y}, %Dimensions{width: w, height: h})
   end
 
   @doc """
@@ -119,6 +126,10 @@ defmodule Widgex.Structs.Frame do
       x: pin_x + size_x / 2,
       y: pin_y + size_y / 2
     }
+  end
+
+  def center_tuple(%__MODULE__{} = frame) do
+    Coordinates.to_tuple(center(frame))
   end
 
   @doc """
