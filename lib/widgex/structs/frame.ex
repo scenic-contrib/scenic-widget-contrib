@@ -129,7 +129,7 @@ defmodule Widgex.Structs.Frame do
   end
 
   def center_tuple(%__MODULE__{} = frame) do
-    Coordinates.to_tuple(center(frame))
+    Coordinates.point(center(frame))
   end
 
   @doc """

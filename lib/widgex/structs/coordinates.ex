@@ -12,8 +12,7 @@ defmodule Widgex.Structs.Coordinates do
   @typedoc "The struct for representing a point in 2D space."
   @type t :: %__MODULE__{
           x: float(),
-          y: float(),
-          point: {float(), float()}
+          y: float()
         }
 
   @typedoc "The type representing the x-coordinate of the point."
@@ -26,6 +25,7 @@ defmodule Widgex.Structs.Coordinates do
   @type point :: {x_coordinate(), y_coordinate()}
 
   defstruct x: 0.0,
-            y: 0.0,
-            point: {0.0, 0.0}
+            y: 0.0
+
+  def point(%__MODULE__{x: x, y: y}), do: {x, y}
 end

@@ -12,8 +12,7 @@ defmodule Widgex.Structs.Dimensions do
   @typedoc "The struct for representing dimensions in 2D space."
   @type t :: %__MODULE__{
           width: width_dimension(),
-          height: height_dimension(),
-          box: {width_dimension(), height_dimension()}
+          height: height_dimension()
         }
 
   @typedoc "The type representing the width dimension."
@@ -26,6 +25,7 @@ defmodule Widgex.Structs.Dimensions do
   @type box :: {width_dimension(), height_dimension()}
 
   defstruct width: 0.0,
-            height: 0.0,
-            box: {0.0, 0.0}
+            height: 0.0
+
+  def box(%__MODULE__{width: w, height: h}), do: {w, h}
 end
