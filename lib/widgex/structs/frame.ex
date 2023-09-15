@@ -35,6 +35,10 @@ defmodule Widgex.Structs.Frame do
     size: %Dimensions{width: nil, height: nil}
   ]
 
+  def new(pin: pin, size: size) do
+    new(pin, size)
+  end
+
   @doc """
   Constructs a new `Frame` struct.
 
@@ -56,7 +60,7 @@ defmodule Widgex.Structs.Frame do
       %Widgex.Structs.Frame{pin: %Widgex.Structs.Coordinates{x: 5, y: 10}, size: %Widgex.Structs.Dimensions{width: 100, height: 200}}
 
   """
-  @spec new(Coordinates.t(), Dimensions.t()) :: t()
+  # @spec new(Coordinates.t(), Dimensions.t()) :: t()
   def new(
         %Coordinates{} = pin \\ %Coordinates{x: 0, y: 0},
         %Dimensions{} = size \\ %Dimensions{width: nil, height: nil}
@@ -69,6 +73,111 @@ defmodule Widgex.Structs.Frame do
 
   def new({x, y}, {w, h}) do
     new(%Coordinates{x: x, y: y}, %Dimensions{width: w, height: h})
+  end
+
+  @doc """
+  The first page we ever learned to rule-up at school.
+
+  +-----------------+
+  |                 |
+  +-----------------+   <-- linemark
+  |                 |
+  |                 |
+  |                 |
+  |                 |
+  |                 |
+  |                 |
+  +-----------------+
+  """
+  # def new(
+  #       %Scenic.ViewPort{size: {vp_width, vp_height}},
+  #       {:standard_rule, frame: 1, linemark: linemark}
+  #     ) do
+  #   new(pin: {0, 0}, size: {vp_width, linemark})
+  # end
+
+  # def new(
+  #       %Scenic.ViewPort{size: {vp_width, vp_height}},
+  #       {:standard_rule, frame: 2, linemark: linemark}
+  #     ) do
+  #   new(pin: {0, linemark}, size: {vp_width, vp_height - linemark})
+  # end
+
+  # return a frame the size of the entire viewport
+  def stack(
+        %Scenic.ViewPort{size: {vp_width, vp_height}},
+        :full_screen
+      ) do
+    [
+      new(pin: {0, 0}, size: {vp_width, vp_height})
+    ]
+  end
+
+  def stack(%Scenic.ViewPort{size: {_vp_width, vp_height}} = vp, :h_split) do
+    # split it down the middle (horizontally)
+    stack(vp, {:horizontal_split, {vp_height / 2, :px}})
+  end
+
+  # split the screen horizontally
+  def stack(
+        %Scenic.ViewPort{size: {vp_width, vp_height}},
+        {:horizontal_split, {split_point, :px}}
+      ) do
+    # The first page we ever learned to rule-up at school.
+    #
+    # +-----------------+
+    # |                 |
+    # +-----------------+   <-- divider (in pixels, from the top)
+    # |                 |
+    # |                 |
+    # |                 |
+    # |                 |
+    # |                 |
+    # |                 |
+    # +-----------------+
+    f1 = new(pin: {0, 0}, size: {vp_width, split_point})
+    f2 = new(pin: {0, split_point}, size: {vp_width, vp_height - split_point})
+
+    [f1, f2]
+  end
+
+  def stack(%Scenic.ViewPort{size: {vp_width, _vp_height}} = vp, :v_split) do
+    # split it down the middle (vertically)
+    stack(vp, {:vertical_split, {vp_width / 2, :px}})
+  end
+
+  def stack(
+        %Scenic.ViewPort{size: {vp_width, vp_height}} = vp,
+        {:vertical_split, {split, :ratio}}
+      )
+      when is_float(split) and split >= 0 and split <= 1 do
+    stack(vp, {:vertical_split, {split * vp_width, :px}})
+  end
+
+  def stack(
+        %Scenic.ViewPort{size: {vp_width, vp_height}},
+        {:vertical_split, {split, :px}}
+      ) do
+    # The day someone discovers buffers in vim/emacs...
+    #
+    # +----------------------+
+    # |           |          |
+    # |           |          |
+    # |           |          |
+    # |           |          |
+    # |<- split ->|          |
+    # |           |          |
+    # |           |          |
+    # |           |          |
+    # |           |          |
+    # +----------------------+
+    #             ^
+    #           divider (in pixels, from the left)
+
+    f1 = new(pin: {0, 0}, size: {split, vp_height})
+    f2 = new(pin: {split, 0}, size: {vp_width - split, vp_height})
+
+    [f1, f2]
   end
 
   @doc """
