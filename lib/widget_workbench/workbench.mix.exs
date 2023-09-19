@@ -29,12 +29,12 @@
 #   end
 # end
 
-defmodule ScenicWidgets.WidgetWorkbench.MixProject do
-   use Mix.Project
-   def project do
-      [
-         app: :widget_workbench,
-         version: "0.0.1"
-      ]
-   end
-end
+# defmodule ScenicWidgets.WidgetWorkbench.MixProject do
+#    use Mix.Project
+#    def project do
+#       [
+#          app: :widget_workbench,
+#          version: "0.0.1"
+#       ]
+#    end
+# end

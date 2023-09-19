@@ -3,6 +3,9 @@ defmodule ScenicWidgets.MenuBar do
   require Logger
   alias ScenicWidgets.MenuBar.FloatButton
   use ScenicWidgets.ScenicEventsDefinitions
+  alias Widgex.Structs.Frame
+
+  alias Widgex.Structs.{Coordinates, Dimensions, Frame}
   # NOTE: This is an example of a valid menu-map
   # [
   #     {"Buffer", [
@@ -12,6 +15,9 @@ defmodule ScenicWidgets.MenuBar do
   #     {"Help", [
   #         {"About QuillEx", &QuillEx.API.Misc.makers_mark/0}]},
   # ]
+
+  defstruct menu_map: nil,
+            color: :grey
 
   # how far we indent the first menu item
   @left_margin 15
@@ -23,6 +29,10 @@ defmodule ScenicWidgets.MenuBar do
 
   defdelegate zero_arity_functions(m), to: ScenicWidgets.MenuBar.MenuMapMaker
   defdelegate modules_and_zero_arity_functions(m), to: ScenicWidgets.MenuBar.MenuMapMaker
+
+  def validate({%__MODULE__{} = state, %Frame{} = frame}) do
+    {:ok, {state, frame}}
+  end
 
   def validate(
         %{
@@ -101,42 +111,56 @@ defmodule ScenicWidgets.MenuBar do
     {:ok, final_data}
   end
 
-  def init(scene, args, opts) do
-    # Logger.debug("#{__MODULE__} initializing...")
+  def init(scene, {%__MODULE__{} = state, %Frame{} = frame}, _opts) do
+    init_graph = render(state, frame)
+    new_scene = scene |> assign(graph: init_graph) |> push_graph(init_graph)
 
-    theme =
-      (opts[:theme] || Scenic.Primitive.Style.Theme.preset(:light))
-      |> Scenic.Primitive.Style.Theme.normalize()
-
-    init_state = %{
-      mode: :inactive,
-      font: calc_font_data(args.font),
-      menu_map: args.menu_map,
-      sub_menu: args.sub_menu,
-      item_width: args.item_width
-    }
-
-    init_frame = args.frame
-
-    init_graph =
-      render(%{
-        state: init_state,
-        frame: init_frame,
-        theme: theme
-      })
-
-    init_scene =
-      scene
-      |> assign(state: init_state)
-      |> assign(graph: init_graph)
-      |> assign(frame: init_frame)
-      |> assign(theme: theme)
-      |> push_graph(init_graph)
-
-    request_input(init_scene, [:cursor_pos, :key]) #TODO maybe this should be done at the higher level too... at least the key inputs
-
-    {:ok, init_scene}
+    {:ok, new_scene}
   end
+
+  # def init(scene, args, opts) do
+  #   # Logger.debug("#{__MODULE__} initializing...")
+
+  #   theme =
+  #     (opts[:theme] || Scenic.Primitive.Style.Theme.preset(:light))
+  #     |> Scenic.Primitive.Style.Theme.normalize()
+
+  #   init_state = %{
+  #     mode: :inactive,
+  #     font: calc_font_data(args.font),
+  #     menu_map: args.menu_map,
+  #     sub_menu: args.sub_menu,
+  #     item_width: args.item_width
+  #   }
+
+  #   init_frame = args.frame
+
+  #   init_graph =
+  #     render(%{
+  #       state: init_state,
+  #       frame: init_frame,
+  #       theme: theme
+  #     })
+
+  #   init_scene =
+  #     scene
+  #     |> assign(state: init_state)
+  #     |> assign(graph: init_graph)
+  #     |> assign(frame: init_frame)
+  #     |> assign(theme: theme)
+  #     |> push_graph(init_graph)
+
+  #   # TODO components in this lib shouldn't be subscribing... make MenuBar like SideNav, have a higher-level component which renders this one
+  #   # we need to subscribe to certain Memex events which cause the MenuBar to re-draw
+  #   # TODO maybe this should be a separate event listener? WHich pushges the changes down via rasdix_state??
+  #   # EventBus.subscribe({__MODULE__, ["memelex"]})
+  #   # Flamelex.Lib.Utils.PubSub.subscribe(topic: :radix_state_change)
+
+  #   # TODO maybe this should be done at the higher level too... at least the key inputs
+  #   request_input(init_scene, [:cursor_pos, :key])
+
+  #   {:ok, init_scene}
+  # end
 
   def handle_cast(new_mode, %{assigns: %{state: %{mode: current_mode}}} = scene)
       when new_mode == current_mode do
@@ -295,6 +319,33 @@ defmodule ScenicWidgets.MenuBar do
   def handle_input({:key, {_key, _dont_care, _dont_care_either}}, _context, scene) do
     # Logger.debug("#{__MODULE__} ignoring key: #{inspect(key)}")
     {:noreply, scene}
+  end
+
+  def render_background(
+        %Scenic.Graph{} = graph,
+        %__MODULE__{color: c} = state,
+        %Frame{size: f_size}
+      )
+      when not is_nil(c) do
+    graph
+    |> Scenic.Primitives.rect(Dimensions.box(f_size),
+      fill: state.color,
+      opacity: 0.5
+    )
+  end
+
+  def render(%__MODULE__{} = state, %Frame{} = frame) do
+    # Logger.debug("#{__MODULE__} rendering...")
+    Scenic.Graph.build()
+    |> Scenic.Primitives.group(
+      fn graph ->
+        graph
+        |> render_background(state, frame)
+
+        # |> render(state, frame)
+      end,
+      id: __MODULE__
+    )
   end
 
   def render(%{state: state} = args) do

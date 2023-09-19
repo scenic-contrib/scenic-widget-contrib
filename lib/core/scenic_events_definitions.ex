@@ -35,7 +35,7 @@ defmodule ScenicWidgets.ScenicEventsDefinitions do
       @release_click 0
 
       @space_bar {:key, {:key_space, @key_pressed, []}}
-  
+
       @left_shift {:key, {:key_leftshift, @key_pressed, []}}
       @right_shift {:key, {:key_rightshift, @key_pressed, []}}
       @left_ctrl {:key, {:key_leftctrl, @key_pressed, []}}
@@ -229,7 +229,7 @@ defmodule ScenicWidgets.ScenicEventsDefinitions do
       @greater_than {:key, {:key_dot, @key_pressed, [:shift]}}
       @forward_slash {:key, {:key_slash, @key_pressed, []}}
       @question_mark {:key, {:key_slash, @key_pressed, [:shift]}}
-      
+
       @all_punctuation [
         @backtick,
         @tilde,
@@ -273,11 +273,12 @@ defmodule ScenicWidgets.ScenicEventsDefinitions do
       @arrow_keys [@left_arrow, @right_arrow, @up_arrow, @down_arrow]
 
       @valid_text_input_characters @all_letters ++
-                                   @all_numbers ++
-                                   @all_punctuation ++ [
-                                   @space_bar,
-                                   @enter_key
-                                 ]
+                                     @all_numbers ++
+                                     @all_punctuation ++
+                                     [
+                                       @space_bar,
+                                       @enter_key
+                                     ]
 
       @meta_lowercase_s {:key, {:key_s, @key_pressed, [:meta]}}
 
@@ -351,7 +352,6 @@ defmodule ScenicWidgets.ScenicEventsDefinitions do
       def key2string(@space_bar), do: " "
       def key2string(@enter_key), do: "\n"
 
-
       def key2string(@backtick), do: "`"
       def key2string(@tilde), do: "~"
       def key2string(@bang), do: "!"
@@ -395,7 +395,7 @@ defmodule ScenicWidgets.ScenicEventsDefinitions do
         #      On the one hand, obviously we are not able to process the
         #      original intent of the request - we have no direct way of
         #      mapping this key to it's actually intended string representation -
-        #      and since we can't service the request, we should fail. 
+        #      and since we can't service the request, we should fail.
         #      Probably, an erlang purist would revert to the classic
         #      'let it crash!' maxim - but to me it's an engineering/design
         #      choice.
@@ -408,9 +408,16 @@ defmodule ScenicWidgets.ScenicEventsDefinitions do
         #      I think the most fundamental truth about what I have learned
         #      from working with the BEAM is that it's important to understand
         #      and know how your program *will* fail, so you can design
-        #      around that - which is the actual source of robust programs,
-        #      - good design.
-        raise "Unable to convert #{inspect(x)} to a valid string."
+        #      around that - which is the actual source of robust programs -
+        #      good design. So should we fail here? The choice is yours~
+
+        take_the_red_pill? = true
+
+        if take_the_red_pill? do
+          raise "Unable to convert #{inspect(x)} to a valid string."
+        else
+          "X"
+        end
       end
     end
   end

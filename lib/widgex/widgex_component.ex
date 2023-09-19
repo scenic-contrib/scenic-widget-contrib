@@ -1,6 +1,6 @@
 defmodule Widgex.Component do
-  defmacro __using__(_opts) do
-    quote do
+  defmacro __using__(opts) do
+    quote location: :keep, bind_quoted: [opts: opts] do
       use Scenic.Component
       require Logger
       alias Widgex.Structs.{Coordinates, Dimensions, Frame}
@@ -17,12 +17,21 @@ defmodule Widgex.Component do
       @impl Scenic.Component
       def init(scene, {state, %Frame{} = frame}, opts) when is_struct(state) do
         init_graph = render_group(state, frame, opts)
-        new_scene = scene |> assign(graph: init_graph) |> push_graph(init_graph)
 
-        {:ok, new_scene}
+        init_scene =
+          scene
+          |> assign(graph: init_graph)
+          |> assign(state: state)
+          |> push_graph(init_graph)
+
+        if unquote(opts)[:handle_cursor_events?] do
+          request_input(init_scene, [:cursor_pos, :cursor_button])
+        end
+
+        {:ok, init_scene}
       end
 
-      defp render_group(state, %Frame{} = frame, opts) do
+      defp render_group(state, %Frame{} = frame, _opts) do
         Scenic.Graph.build(font: :ibm_plex_mono)
         |> Scenic.Primitives.group(
           fn graph ->
@@ -50,6 +59,36 @@ defmodule Widgex.Component do
           opacity: @opacity
         )
       end
+
+      # def handle_input({:cursor_pos, {_x, _y} = coords}, _context, scene) do
+      #   IO.puts("HOVER COORDS: #{inspect(coords)}")
+      #   # NOTE: `menu_bar_max_height` is the full height, including any
+      #   #       currently rendered sub-menus. As new sub-menus of different
+      #   #       lengths get rendered, this max-height will change.
+      #   #
+      #   #       menu_bar_max_height = @height + num_sub_menu*@sub_menu_height
+      #   # {_x, _y, _viewport_width, menu_bar_max_height} = Scenic.Graph.bounds(scene.assigns.graph)
+
+      #   # if y > menu_bar_max_height do
+      #   #   GenServer.cast(self(), {:cancel, scene.assigns.state.mode})
+      #   #   {:noreply, scene}
+      #   # else
+      #   #   # TODO here check if we veered of sideways in a sub-menu
+      #   #   {:noreply, scene}
+      #   # end
+
+      #   {:noreply, scene}
+      # end
+
+      # def handle_input({:cursor_button, {:btn_left, 0, [], click_coords}}, _context, scene) do
+      #   bounds = Scenic.Graph.bounds(scene.assigns.graph)
+
+      #   if click_coords |> ScenicWidgets.Utils.inside?(bounds) do
+      #     cast_parent(scene, {:click, scene.assigns.state.unique_id})
+      #   end
+
+      #   {:noreply, scene}
+      # end
     end
   end
 end

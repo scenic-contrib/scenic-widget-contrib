@@ -1,7 +1,8 @@
 defmodule ScenicWidgets.UbuntuBar do
   use Widgex.Component
 
-  defstruct menu_map: nil,
+  defstruct id: __MODULE__,
+            menu_map: nil,
             menu_map_config: nil,
             theme: nil,
             layout: {:column, :center}
@@ -9,7 +10,7 @@ defmodule ScenicWidgets.UbuntuBar do
   def draw do
     %__MODULE__{
       menu_map: [
-        %{glyph: "#", hi: 1}
+        %{glyph: "~", hi: 1}
       ],
       theme: QuillEx.GUI.Themes.midnight_shadow()
     }
@@ -19,15 +20,16 @@ defmodule ScenicWidgets.UbuntuBar do
     graph
     |> fill_frame(f, color: state.theme.border)
     |> render_glyphs(state, f)
+    |> Scenic.Components.button("Sample Button",
+      id: :sample_btn_id,
+      t: {10, 10},
+      font: :ibm_plex_mono
+    )
   end
 
   def render_glyphs(graph, %__MODULE__{layout: {:column, :center}} = state, %Frame{} = f) do
     # we want to render each glyph as a square, in a central column
     box_size = f.size.width
-
-    IO.puts("REWNDER GLUE")
-
-    # dbg()
 
     Enum.reduce(state.menu_map, graph, fn %{glyph: glyph, hi: hi}, graph ->
       graph
@@ -62,5 +64,41 @@ defmodule ScenicWidgets.UbuntuBar do
       fill: :white,
       translate: {excess_width / 2, size}
     )
+  end
+
+  def handle_input({:cursor_pos, {_x, _y} = hover_coords}, _context, scene) do
+    bounds = Scenic.Graph.bounds(scene.assigns.graph)
+
+    if hover_coords |> ScenicWidgets.Utils.inside?(bounds) do
+      cast_parent(scene, {:hover, scene.assigns.state.id})
+    else
+      cast_parent(scene, {:no_hover, scene.assigns.state.id})
+    end
+
+    {:noreply, scene}
+  end
+
+  def handle_input(
+        {:cursor_button, {:btn_left, @key_pressed, [], {_x, _y} = click_coords}},
+        _context,
+        scene
+      ) do
+    bounds = Scenic.Graph.bounds(scene.assigns.graph)
+
+    if click_coords |> ScenicWidgets.Utils.inside?(bounds) do
+      cast_parent(scene, {:left_click, scene.assigns.state.id})
+    end
+
+    {:noreply, scene}
+  end
+
+  def handle_input(
+        {:cursor_button, {:btn_left, x, [], {_x, _y} = click_coords}},
+        _context,
+        scene
+      )
+      when x in [@key_released, @key_held] do
+    # ignore...
+    {:noreply, scene}
   end
 end

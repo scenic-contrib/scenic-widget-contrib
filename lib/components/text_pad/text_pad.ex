@@ -1,491 +1,491 @@
 defmodule ScenicWidgets.TextPad do
-   use Scenic.Component
-   use ScenicWidgets.ScenicEventsDefinitions
-   alias ScenicWidgets.Core.Structs.Frame
-   alias ScenicWidgets.TextPad.Structs.Font
-   require Logger
+  use Scenic.Component
+  use ScenicWidgets.ScenicEventsDefinitions
+  alias ScenicWidgets.Core.Structs.Frame
+  alias ScenicWidgets.TextPad.Structs.Font
+  require Logger
 
-   @newline_char "\n"
+  @newline_char "\n"
 
-   #TODO handle mutiple cursors
+  # TODO handle mutiple cursors
 
-   defstruct [
-      mode: nil,                 # affects how we render the cursor
-      font: nil,                 # the font settings for this TextPad   
-      lines: nil,                # hold the list of LineOfText structs
-      margin: nil,               # how much margin we want to leave around the edges
-      cursor: %{                 # maintains the cursor coords, note we just support single-cursor for now
-         line: nil,
-         col: nil
+  defstruct [
+    # affects how we render the cursor
+    mode: nil,
+    # the font settings for this TextPad
+    font: nil,
+    # hold the list of LineOfText structs
+    lines: nil,
+    # how much margin we want to leave around the edges
+    margin: nil,
+    # maintains the cursor coords, note we just support single-cursor for now
+    cursor: %{
+      line: nil,
+      col: nil
+    },
+    opts: %{
+      alignment: :left,
+      wrap: :no_wrap,
+      scroll: %{
+        direction: :all,
+        # An accumulator for the amount of scroll
+        acc: {0, 0}
       },
-      opts: %{
-         alignment: :left,
-         wrap: :no_wrap,
-         scroll: %{
-            direction: :all,
-            acc: {0, 0}          # An accumulator for the amount of scroll
-         },
-         show_line_nums?: false  # toggles the display of line numbers in the left margin
-      }
-   ]
+      # toggles the display of line numbers in the left margin
+      show_line_nums?: false
+    }
+  ]
 
+  defdelegate new(), to: ScenicWidgets.TextPad.Utils
+  defdelegate new(args), to: ScenicWidgets.TextPad.Utils
+  # defdelegate backspace(lines_of_text, cursor, x, position), to: ScenicWidgets.TextPad.Utils
 
-   defdelegate new(), to: ScenicWidgets.TextPad.Utils
-   defdelegate new(args), to: ScenicWidgets.TextPad.Utils
-   # defdelegate backspace(lines_of_text, cursor, x, position), to: ScenicWidgets.TextPad.Utils
+  def validate(%{frame: %Frame{} = _f, state: %__MODULE__{} = _s} = data) do
+    {:ok, data}
+  end
 
+  def init(scene, args, opts) do
+    id = opts[:id] || raise "#{__MODULE__} must receive `id` via opts."
 
-   def validate(%{frame: %Frame{} = _f, state: %__MODULE__{} = _s} = data)  do
-      {:ok, data}
-   end
+    init_theme = ScenicWidgets.Utils.Theme.get_theme(opts)
 
-   def init(scene, args, opts) do
-
-      id = opts[:id] || raise "#{__MODULE__} must receive `id` via opts."
-
-      init_theme = ScenicWidgets.Utils.Theme.get_theme(opts)
-
-      init_graph = render(%{
-         id: id,
-         frame: args.frame,
-         theme: init_theme,
-         state: args.state
+    init_graph =
+      render(%{
+        id: id,
+        frame: args.frame,
+        theme: init_theme,
+        state: args.state
       })
 
-      init_scene =
-         scene
-         |> assign(id: id)
-         |> assign(theme: init_theme)
-         |> assign(frame: args.frame)
-         |> assign(state: args.state)
-         |> assign(graph: init_graph)
-         |> push_graph(init_graph)
+    init_scene =
+      scene
+      |> assign(id: id)
+      |> assign(theme: init_theme)
+      |> assign(frame: args.frame)
+      |> assign(state: args.state)
+      |> assign(graph: init_graph)
+      |> push_graph(init_graph)
 
-      {:ok, init_scene}
-   end
+    {:ok, init_scene}
+  end
 
-   #TODO handle_update, in such a way that we just go through init/3 again, but
-   # without needing to spin up sub-processes.... eliminate all the extra handle_cast logic
+  # TODO handle_update, in such a way that we just go through init/3 again, but
+  # without needing to spin up sub-processes.... eliminate all the extra handle_cast logic
 
-   def handle_cast({:redraw, %{data: nil} = args}, scene) do
-      lines = [""]
-      GenServer.cast(self(), {:redraw, Map.put(args, :data, lines)})
+  def handle_cast({:redraw, %{data: nil} = args}, scene) do
+    lines = [""]
+    GenServer.cast(self(), {:redraw, Map.put(args, :data, lines)})
+    {:noreply, scene}
+  end
+
+  def handle_cast({:redraw, %{data: text} = args}, scene) when is_bitstring(text) do
+    lines = String.split(text, @newline_char)
+    GenServer.cast(self(), {:redraw, Map.put(args, :data, lines)})
+    {:noreply, scene}
+  end
+
+  def handle_cast({:redraw, buffer}, scene) do
+    new_graph =
+      scene.assigns.graph
+      |> scroll_text_area(scene, buffer)
+      |> update_data(scene, buffer)
+      |> update_cursor(scene, buffer)
+
+    update_scroll_limits(scene, buffer)
+
+    if new_graph == scene.assigns.graph do
       {:noreply, scene}
-   end
+    else
+      new_scene =
+        scene
+        |> assign(graph: new_graph)
+        |> push_graph(new_graph)
 
-   def handle_cast({:redraw, %{data: text} = args}, scene) when is_bitstring(text) do
-      lines = String.split(text, @newline_char)
-      GenServer.cast(self(), {:redraw, Map.put(args, :data, lines)})
-      {:noreply, scene}
-   end
+      {:noreply, new_scene}
+    end
+  end
 
-   def handle_cast({:redraw, buffer}, scene) do
+  def render(%{id: id, frame: frame, state: _s, theme: _t} = args) do
+    Scenic.Graph.build()
+    |> Scenic.Primitives.group(
+      fn graph ->
+        graph
+        |> draw_background(args)
+        |> draw_text_area(args)
 
-      new_graph =
-         scene.assigns.graph
-         |> scroll_text_area(scene, buffer)
-         |> update_data(scene, buffer)
-         |> update_cursor(scene, buffer)
-      
-      update_scroll_limits(scene, buffer)
+        # |> draw_scrollbars(args)
+      end,
+      id: {__MODULE__, id},
+      translate: frame.coords.point
+    )
+  end
 
-      if new_graph == scene.assigns.graph do
-         {:noreply, scene}
-      else
-         new_scene = scene
-         |> assign(graph: new_graph)
-         |> push_graph(new_graph)
+  def draw_background(graph, %{frame: frame, theme: theme}) do
+    graph
+    |> Scenic.Primitives.rect(
+      {frame.dimens.width, frame.dimens.height},
+      id: :background,
+      fill: theme.active,
+      stroke: {2, theme.border},
+      scissor: frame.dimens.box
+    )
+  end
 
-         {:noreply, new_scene}
-      end
-   end
+  def draw_text_area(graph, %{id: id, frame: frame, state: state} = args) do
+    graph
+    |> Scenic.Primitives.group(
+      fn graph ->
+        graph
+        |> draw_lines_of_text(args)
+        |> draw_cursor(args)
+      end,
+      id: {__MODULE__, id, :text_area},
+      translate: state.opts.scroll.acc
+    )
+  end
 
-   def render(%{id: id, frame: frame, state: _s, theme: _t} = args) do
-      Scenic.Graph.build()
-      |> Scenic.Primitives.group(
-         fn graph ->
-            graph
-            |> draw_background(args)
-            |> draw_text_area(args)
-            # |> draw_scrollbars(args)
-         end,
-         id: {__MODULE__, id},
-         translate: frame.coords.point
+  def draw_lines_of_text(graph, %{frame: frame, state: %{lines: lines, font: font}} = args) do
+    {_total_num_lines, final_graph} =
+      1..Enum.count(lines)
+      |> Enum.map_reduce(graph, fn line_num, graph ->
+        new_graph =
+          graph
+          |> ScenicWidgets.TextPad.LineOfText.add_to_graph(
+            %{
+              line_num: line_num,
+              name: random_string(),
+              font: font,
+              frame: calc_line_of_text_frame(frame, args.state, line_num),
+              text: Enum.at(lines, line_num - 1),
+              theme: args.theme
+            },
+            id: {:line, line_num}
+          )
+
+        {line_num + 1, new_graph}
+      end)
+
+    final_graph
+  end
+
+  def draw_cursor(graph, %{state: %{mode: :read_only}}) do
+    # no cursors in read-only mode...
+    graph
+  end
+
+  def draw_cursor(graph, %{state: state}) do
+    line_height = Font.line_height(state.font)
+
+    graph
+    |> ScenicWidgets.TextPad.CursorCaret.add_to_graph(
+      %{
+        margin: state.margin,
+        coords: calc_cursor_caret_coords(state, line_height),
+        height: line_height,
+        font: state.font,
+        mode: calc_cursor_mode(state.mode)
+      },
+      id: {:cursor, 1}
+    )
+  end
+
+  def update_data(graph, scene, %{data: [l | _rest] = lines_of_text}) when is_bitstring(l) do
+    final_graph =
+      lines_of_text
+      |> Enum.with_index(1)
+      |> Enum.reduce(
+        graph,
+        fn {text, line_num}, acc_graph ->
+          case child(scene, {:line, line_num}) do
+            {:ok, [pid]} ->
+              GenServer.cast(pid, {:redraw, text})
+              acc_graph
+
+            {:ok, []} ->
+              # need to create a new LineOfText component...
+              acc_graph
+              |> Scenic.Graph.add_to({__MODULE__, scene.assigns.id, :text_area}, fn graph ->
+                graph
+                |> ScenicWidgets.TextPad.LineOfText.add_to_graph(
+                  %{
+                    line_num: line_num,
+                    name: random_string(),
+                    font: scene.assigns.state.font,
+                    frame:
+                      calc_line_of_text_frame(scene.assigns.frame, scene.assigns.state, line_num),
+                    text: text,
+                    theme: scene.assigns.theme
+                  },
+                  id: {:line, line_num}
+                )
+              end)
+          end
+        end
       )
-   end
 
-   def draw_background(graph, %{frame: frame, theme: theme}) do
-      graph
-      |> Scenic.Primitives.rect(
-         {frame.dimens.width, frame.dimens.height},
-         id: :background,
-         fill: theme.active,
-         stroke: {2, theme.border},
-         scissor: frame.dimens.box
-      )
-   end
+    final_graph
+  end
 
-   def draw_text_area(graph, %{id: id, frame: frame, state: state} = args) do
-      graph
-      |> Scenic.Primitives.group(
-         fn graph ->
-            graph
-            |> draw_lines_of_text(args)
-            |> draw_cursor(args)
-         end,
-         id: {__MODULE__, id, :text_area},
-         translate: state.opts.scroll.acc
-      )
-   end
+  # TODO use insert_text_at_cursor
+  def update_cursor(graph, %{assigns: %{state: state}} = scene, %{
+        data: lines,
+        cursors: [cursor],
+        mode: buffer_mode
+      }) do
+    line_of_text = Enum.at(lines, cursor.line - 1)
 
-   def draw_lines_of_text(graph, %{frame: frame, state: %{lines: lines, font: font}} = args) do
-      {_total_num_lines, final_graph} =
-         1..Enum.count(lines)
-         |> Enum.map_reduce(graph, fn line_num, graph ->
-            new_graph =
-               graph
-               |> ScenicWidgets.TextPad.LineOfText.add_to_graph(%{
-                  line_num: line_num,
-                  name: random_string(),
-                  font: font,
-                  frame: calc_line_of_text_frame(frame, args.state, line_num),
-                  text: Enum.at(lines, line_num-1),
-                  theme: args.theme,
-               }, id: {:line, line_num})
-      
-            {line_num+1, new_graph}
-         end)
-   
-      final_graph
-   end
+    # TODO this might be more relevent when we get to wrapping...
+    # TODO this can crash if we delete a line of text somehow
+    {x_pos, _cursor_line_num} =
+      FontMetrics.position_at(line_of_text, cursor.col - 1, state.font.size, state.font.metrics)
 
-   def draw_cursor(graph, %{state: %{mode: :read_only}}) do
-      # no cursors in read-only mode...
-      graph
-   end
+    new_cursor = {
+      state.margin.left + x_pos,
+      state.margin.top + (cursor.line - 1) * Font.line_height(state.font)
+    }
 
-   def draw_cursor(graph, %{state: state}) do
-      line_height = Font.line_height(state.font)
+    {:ok, [pid]} = child(scene, {:cursor, 1})
+    GenServer.cast(pid, {:move, new_cursor})
+    GenServer.cast(pid, {:set_mode, calc_cursor_mode(buffer_mode)})
 
-      graph
-      |> ScenicWidgets.TextPad.CursorCaret.add_to_graph(%{
-         margin: state.margin,
-         coords: calc_cursor_caret_coords(state, line_height),
-         height: line_height,
-         font: state.font,
-         mode: calc_cursor_mode(state.mode),
-      }, id: {:cursor, 1})
-   end
+    # unchanged...
+    graph
+  end
 
-   def update_data(graph, scene, %{data: [l|_rest] = lines_of_text}) when is_bitstring(l) do
+  def update_scroll_limits(scene, %{data: lines_of_text}) do
+    # buffer height = number of lines of text * line_height
+    h = length(lines_of_text) * Font.line_height(scene.assigns.state.font)
 
-      final_graph =
-         lines_of_text
-         |> Enum.with_index(1)
-         |> Enum.reduce(graph,
-            fn({text, line_num}, acc_graph) ->
+    line_widths =
+      Enum.map(lines_of_text, fn line ->
+        FontMetrics.width(line, scene.assigns.state.font.size, scene.assigns.state.font.metrics)
+      end)
 
-               case child(scene, {:line, line_num}) do
-                  {:ok, [pid]} ->
-                     GenServer.cast(pid, {:redraw, text})
-                     acc_graph
-                  {:ok, []} ->
-                     # need to create a new LineOfText component...
-                     acc_graph
-                     |> Scenic.Graph.add_to({__MODULE__, scene.assigns.id, :text_area}, fn graph ->
-                        graph
-                        |> ScenicWidgets.TextPad.LineOfText.add_to_graph(%{
-                        line_num: line_num,
-                        name: random_string(),
-                        font: scene.assigns.state.font,
-                        frame: calc_line_of_text_frame(scene.assigns.frame, scene.assigns.state, line_num),
-                        text: text,
-                        theme: scene.assigns.theme,
-                        }, id: {:line, line_num})
-                     end)
-               end
-            end)
-
-      final_graph
-   end
-
-   #TODO use insert_text_at_cursor
-   def update_cursor(graph, %{assigns: %{state: state}} = scene, %{data: lines, cursors: [cursor], mode: buffer_mode}) do
-
-      line_of_text = Enum.at(lines, cursor.line-1)
-
-      #TODO this might be more relevent when we get to wrapping...
-      {x_pos, _cursor_line_num} =
-         #TODO this can crash if we delete a line of text somehow
-         FontMetrics.position_at(line_of_text, cursor.col-1, state.font.size, state.font.metrics)
-
-
-      new_cursor =
-         {
-            state.margin.left + x_pos,
-            state.margin.top + ((cursor.line-1) * Font.line_height(state.font))
-         }
-
-      {:ok, [pid]} = child(scene, {:cursor, 1})
-      GenServer.cast(pid, {:move, new_cursor})
-      GenServer.cast(pid, {:set_mode, calc_cursor_mode(buffer_mode)})
-
-      graph # unchanged...
-   end
-
-   def update_scroll_limits(scene, %{data: lines_of_text}) do
-      
-      # buffer height = number of lines of text * line_height
-      h = length(lines_of_text) * Font.line_height(scene.assigns.state.font)
-
-      line_widths =
-         Enum.map(lines_of_text, fn line ->
-            FontMetrics.width(line, scene.assigns.state.font.size, scene.assigns.state.font.metrics)
-         end)
-
-      cast_parent(scene, {:scroll_limits, %{
+    cast_parent(
+      scene,
+      {:scroll_limits,
+       %{
          inner: %{
-         width: Enum.max(line_widths),
-         height: h,
+           width: Enum.max(line_widths),
+           height: h
          },
          frame: scene.assigns.frame
-      }})
+       }}
+    )
 
-      #TODO is this fast enough?? Will it pick up changes fast enough , since they are done asyncronously???
-      # {left, _top, right, _bottom} =
-      #   scene.assigns.graph
-      #   |> Scenic.Graph.bounds()
+    # TODO is this fast enough?? Will it pick up changes fast enough , since they are done asyncronously???
+    # {left, _top, right, _bottom} =
+    #   scene.assigns.graph
+    #   |> Scenic.Graph.bounds()
 
-      # {left, _top, right, _bottom} =
-      #   scene.assigns.graph
-      #   |> Scenic.Graph.bounds()
+    # {left, _top, right, _bottom} =
+    #   scene.assigns.graph
+    #   |> Scenic.Graph.bounds()
 
-      # text_width = right-left
-      # %{dimensions: %{width: frame_width}} = scene.assigns.frame
+    # text_width = right-left
+    # %{dimensions: %{width: frame_width}} = scene.assigns.frame
 
-      # percentage = frame_width/text_width
+    # percentage = frame_width/text_width
 
-      # {:ok, [pid]} = child(scene, {:scrollbar, :horizontal})
-      # GenServer.cast(pid, {:scroll_percentage, :horizontal, percentage})
-      # {:noreply, scene |> assign(percentage: percentage)}
+    # {:ok, [pid]} = child(scene, {:scrollbar, :horizontal})
+    # GenServer.cast(pid, {:scroll_percentage, :horizontal, percentage})
+    # {:noreply, scene |> assign(percentage: percentage)}
 
-      # cond do
-      #   frame_width >= text_width ->
-      #     {:noreply, scene}
-      #   text_width > frame_width ->
-      #     {:ok, [pid]} = child(scene, {:scrollbar, :horizontal})
-      #     GenServer.cast(pid, {:scroll_percentage, :horizontal, frame_width/text_width})
-      #     {:noreply, scene}
-      # end
+    # cond do
+    #   frame_width >= text_width ->
+    #     {:noreply, scene}
+    #   text_width > frame_width ->
+    #     {:ok, [pid]} = child(scene, {:scrollbar, :horizontal})
+    #     GenServer.cast(pid, {:scroll_percentage, :horizontal, frame_width/text_width})
+    #     {:noreply, scene}
+    # end
+  end
 
-   end
+  # TODO check scroll in the state against new scroll, maybe we can skip this if they haven't changed
+  def scroll_text_area(graph, scene, buffer) do
+    # first update the graph with any scroll updates
+    # TODO cast to scroll bars... make them visible/not visible, adjust position & percentage shown aswell
+    graph
+    |> Scenic.Graph.modify(
+      {__MODULE__, scene.assigns.id, :text_area},
+      # TODO check this
+      &Scenic.Primitives.update_opts(&1, translate: buffer.scroll_acc)
+    )
+  end
 
+  def calc_cursor_mode({:vim, :normal}) do
+    :block
+  end
 
-   #TODO check scroll in the state against new scroll, maybe we can skip this if they haven't changed
-   def scroll_text_area(graph, scene, buffer) do
-      # first update the graph with any scroll updates
-      #TODO cast to scroll bars... make them visible/not visible, adjust position & percentage shown aswell
-      graph
-      |> Scenic.Graph.modify(
-         {__MODULE__, scene.assigns.id, :text_area},
-         &Scenic.Primitives.update_opts(&1, translate: buffer.scroll_acc) #TODO check this
-      )
-   end
+  def calc_cursor_mode(m)
+      when m in [
+             :edit,
+             {:vim, :insert}
+           ] do
+    :cursor
+  end
 
-   def calc_cursor_mode({:vim, :normal}) do
-      :block
-   end
+  def calc_cursor_caret_coords(state, line_height) when line_height >= 0 do
+    line = Enum.at(state.lines, state.cursor.line - 1)
 
-   def calc_cursor_mode(m) when m in [
-      :edit,
-      {:vim, :insert}
-   ] do
-      :cursor
-   end
+    {x_pos, _line_num} =
+      FontMetrics.position_at(line, state.cursor.col - 1, state.font.size, state.font.metrics)
 
-   def calc_cursor_caret_coords(state, line_height) when line_height >= 0 do
-      line = Enum.at(state.lines, state.cursor.line-1)
-      {x_pos, _line_num} =
-         FontMetrics.position_at(line, state.cursor.col-1, state.font.size, state.font.metrics)
-   
-      {
-         state.margin.left + x_pos,
-         state.margin.top + ((state.cursor.line-1) * line_height)
-      }
-   end
+    {
+      state.margin.left + x_pos,
+      state.margin.top + (state.cursor.line - 1) * line_height
+    }
+  end
 
-   def calc_line_of_text_frame(frame, %{margin: margin, font: font}, line_num) do
-      line_height = Font.line_height(font)
-      y_offset = (line_num-1)*line_height # how far we need to move this line down, based on what line number it is
-      Frame.new(%{
-         pin: {margin.left, margin.top+y_offset},
-         size: {frame.dimens.width, line_height}
-      })
-   end
+  def calc_line_of_text_frame(frame, %{margin: margin, font: font}, line_num) do
+    line_height = Font.line_height(font)
+    # how far we need to move this line down, based on what line number it is
+    y_offset = (line_num - 1) * line_height
 
-   defp draw_scrollbars(graph, args) do
-      raise "nop cant yet"
+    Frame.new(%{
+      pin: {margin.left, margin.top + y_offset},
+      size: {frame.dimens.width, line_height}
+    })
+  end
 
-               # |> ScenicWidgets.TextPad.ScrollBar.add_to_graph(%{
-         #       frame: horizontal_scroll_bar_frame(args.frame),
-         #       orientation: :horizontal,
-         #       position: 1
-         # }, id: {:scrollbar, :horizontal}, hidden: true)
-   end
+  defp draw_scrollbars(graph, args) do
+    raise "nop cant yet"
 
-#   def horizontal_scroll_bar_frame(outer_frame) do
-#     bar_height = 20
-#     bottom_left_corner = Frame.bottom_left(outer_frame)
+    # |> ScenicWidgets.TextPad.ScrollBar.add_to_graph(%{
+    #       frame: horizontal_scroll_bar_frame(args.frame),
+    #       orientation: :horizontal,
+    #       position: 1
+    # }, id: {:scrollbar, :horizontal}, hidden: true)
+  end
 
-#     #NOTE: Don't go all the way to the edges of the outer frame, we
-#     # want to sit perfectly snug inside it
-#     Frame.new(
-#       pin: {bottom_left_corner.x+1, bottom_left_corner.y-bar_height-1},
-#       size: {outer_frame.dimens.width-2, bar_height}
-#     )
-#   end
+  #   def horizontal_scroll_bar_frame(outer_frame) do
+  #     bar_height = 20
+  #     bottom_left_corner = Frame.bottom_left(outer_frame)
 
+  #     #NOTE: Don't go all the way to the edges of the outer frame, we
+  #     # want to sit perfectly snug inside it
+  #     Frame.new(
+  #       pin: {bottom_left_corner.x+1, bottom_left_corner.y-bar_height-1},
+  #       size: {outer_frame.dimens.width-2, bar_height}
+  #     )
+  #   end
 
-#   def calc_font_details(args) do
-#     case Map.get(args, :font, :not_found) do
-#       %{name: font_name, size: font_size, metrics: %FontMetrics{} = _fm} = provided_details
-#       when is_atom(font_name) and is_integer(font_size) ->
-#         provided_details
+  #   def calc_font_details(args) do
+  #     case Map.get(args, :font, :not_found) do
+  #       %{name: font_name, size: font_size, metrics: %FontMetrics{} = _fm} = provided_details
+  #       when is_atom(font_name) and is_integer(font_size) ->
+  #         provided_details
 
-#       %{name: font_name, size: custom_font_size}
-#       when is_atom(font_name) and is_integer(custom_font_size) ->
-#         {:ok, {_type, custom_font_metrics}} = Scenic.Assets.Static.meta(font_name)
-#         %{name: font_name, metrics: custom_font_metrics, size: custom_font_size}
+  #       %{name: font_name, size: custom_font_size}
+  #       when is_atom(font_name) and is_integer(custom_font_size) ->
+  #         {:ok, {_type, custom_font_metrics}} = Scenic.Assets.Static.meta(font_name)
+  #         %{name: font_name, metrics: custom_font_metrics, size: custom_font_size}
 
-#       :not_found ->
-#         {:ok, {_type, default_font_metrics}} = Scenic.Assets.Static.meta(@default_font)
-#         %{name: @default_font, metrics: default_font_metrics, size: @default_font_size}
+  #       :not_found ->
+  #         {:ok, {_type, default_font_metrics}} = Scenic.Assets.Static.meta(@default_font)
+  #         %{name: @default_font, metrics: default_font_metrics, size: @default_font_size}
 
-#       font_name when is_atom(font_name) ->
-#         {:ok, {_type, custom_font_metrics}} = Scenic.Assets.Static.meta(font_name)
-#         %{name: font_name, metrics: custom_font_metrics, size: @default_font_size}
-#     end
-#   end
+  #       font_name when is_atom(font_name) ->
+  #         {:ok, {_type, custom_font_metrics}} = Scenic.Assets.Static.meta(font_name)
+  #         %{name: font_name, metrics: custom_font_metrics, size: @default_font_size}
+  #     end
+  #   end
 
   def random_string do
     # https://dev.to/diogoko/random-strings-in-elixir-e8i
     for _ <- 1..10, into: "", do: <<Enum.random('0123456789abcdef')>>
   end
-
 end
 
-
-
-
-
 # def handle_cast({:redraw, %{scroll: _delta}}, %{assigns: %{percentage: p}} = scene) when p >= 1 do
-  #   IO.puts "NO SCRTOLL"
-  #   {:noreply, scene}
-  # end
+#   IO.puts "NO SCRTOLL"
+#   {:noreply, scene}
+# end
 
-  # def handle_cast({:redraw, %{scroll: {delta_x, delta_y}}}, scene) do
+# def handle_cast({:redraw, %{scroll: {delta_x, delta_y}}}, scene) do
 
-  #   IO.puts "GOT SCROLL!?!???"
+#   IO.puts "GOT SCROLL!?!???"
 
+#   diff = (1-scene.assigns.percentage) * scene.assigns.frame.dimensions.width
 
+#   {x_diff, y_diff} = new_scroll_acc =
+#     Scenic.Math.Vector2.add(scene.assigns.scroll_acc, {delta_x*x_scroll_factor, delta_y*@scroll_speed})
+#     |> calc_ceil(@min_position_cap)
+#     # |> IO.inspect(label: "NEW SCROLL")
 
-  #   diff = (1-scene.assigns.percentage) * scene.assigns.frame.dimensions.width
+#   if abs(x_diff) >= diff do
+#     IO.puts "YESSS - DONT SCROLLLLLLL"
+#     IO.inspect x_diff, label: "XDIF"
+#     IO.inspect diff, label: "DIF"
 
-  #   {x_diff, y_diff} = new_scroll_acc =
-  #     Scenic.Math.Vector2.add(scene.assigns.scroll_acc, {delta_x*x_scroll_factor, delta_y*@scroll_speed})
-  #     |> calc_ceil(@min_position_cap)
-  #     # |> IO.inspect(label: "NEW SCROLL")
+#     {:noreply, scene}
 
-  #   if abs(x_diff) >= diff do
-  #     IO.puts "YESSS - DONT SCROLLLLLLL"
-  #     IO.inspect x_diff, label: "XDIF"
-  #     IO.inspect diff, label: "DIF"
+#   else
+#     IO.puts "NOOOOO"
+#     IO.inspect x_diff, label: "XDIF"
+#     IO.inspect diff, label: "DIF"
 
-  #     {:noreply, scene}
+#     new_graph =scene.assigns.graph |> Scenic.Graph.modify(
+#       {__MODULE__, scene.assigns.id, :text_area},
+#       &Scenic.Primitives.update_opts(&1, translate: new_scroll_acc)
+#     )
 
-  #   else
-  #     IO.puts "NOOOOO"
-  #     IO.inspect x_diff, label: "XDIF"
-  #     IO.inspect diff, label: "DIF"
+#     #TODO update scroll bar
 
-  #     new_graph =scene.assigns.graph |> Scenic.Graph.modify(
-  #       {__MODULE__, scene.assigns.id, :text_area},
-  #       &Scenic.Primitives.update_opts(&1, translate: new_scroll_acc)
-  #     )
+#     new_scene = scene
+#     |> assign(graph: new_graph)
+#     |> push_graph(new_graph)
 
-  #     #TODO update scroll bar
-  
-  #     new_scene = scene
-  #     |> assign(graph: new_graph)
-  #     |> push_graph(new_graph)
-  
-  #     {:noreply, new_scene}
+#     {:noreply, new_scene}
 
-  #   end
-  # end
+#   end
+# end
 
-  #NOTE: This doesn't work simply because when we type a msg, the line of
-  # text doesn't get updated before we try to calculate the cursor position
-  # def handle_cast({:redraw, %{cursor: cursor}}, scene) do
-  #   # text = Enum.at(scene.assigns.data, cursor.line-1)
+# NOTE: This doesn't work simply because when we type a msg, the line of
+# text doesn't get updated before we try to calculate the cursor position
+# def handle_cast({:redraw, %{cursor: cursor}}, scene) do
+#   # text = Enum.at(scene.assigns.data, cursor.line-1)
 
-  #   {:ok, [pid]} = child(scene, {:line, cursor.line})
-  #   {:ok, text} = GenServer.call(pid, :get_text)
+#   {:ok, [pid]} = child(scene, {:line, cursor.line})
+#   {:ok, text} = GenServer.call(pid, :get_text)
 
-  #   {x_pos, _cursor_line_num} =
-  #       FontMetrics.position_at(text, cursor.col-1, scene.assigns.state.font.size, scene.assigns.state.font.metrics)
+#   {x_pos, _cursor_line_num} =
+#       FontMetrics.position_at(text, cursor.col-1, scene.assigns.state.font.size, scene.assigns.state.font.metrics)
 
-  #   new_cursor =
-  #     {
-  #       (scene.assigns.state.margin.left + x_pos),
-  #       (scene.assigns.state.margin.top + ((cursor.line-1) * line_height(scene.assigns)))
-  #     }
+#   new_cursor =
+#     {
+#       (scene.assigns.state.margin.left + x_pos),
+#       (scene.assigns.state.margin.top + ((cursor.line-1) * line_height(scene.assigns)))
+#     }
 
-  #   {:ok, [pid]} = child(scene, {:cursor, 1})
-  #   GenServer.cast(pid, {:move, new_cursor})
+#   {:ok, [pid]} = child(scene, {:cursor, 1})
+#   GenServer.cast(pid, {:move, new_cursor})
 
-  #   {:noreply, scene}
-  # end
+#   {:noreply, scene}
+# end
 
+# GenServer.cast(pid, {:redraw, %{data: active_buffer.data, cursor: hd(active_buffer.cursors)}})
+# GenServer.cast(pid, {:redraw, %{scroll_acc: active_buffer.scroll_acc}})
+# def handle_update(%{text: t, cursor: %Cursor{} = c, scroll_acc: s} = data, opts, scene) when is_bitstring(t) do
 
+# TODO ok this is stupid, we need to go through validate/1 to use this, even though most of it is a waste of time...
 
-  # GenServer.cast(pid, {:redraw, %{data: active_buffer.data, cursor: hd(active_buffer.cursors)}})
-  # GenServer.cast(pid, {:redraw, %{scroll_acc: active_buffer.scroll_acc}})
-  # def handle_update(%{text: t, cursor: %Cursor{} = c, scroll_acc: s} = data, opts, scene) when is_bitstring(t) do
+# def handle_update(%{text: t, cursor: c, scroll_acc: s} = data, opts, scene) when is_bitstring(t) do
+#   # IO.puts "HAND:ING UPDATEEEE"
+#   # lines = String.split(t, @newline_char)
+#   GenServer.cast(self(), %{data: t, cursor: c})
+#   GenServer.cast(self(), %{scroll_acc: s})
+#   {:noreply, scene}
+# end
 
-  #TODO ok this is stupid, we need to go through validate/1 to use this, even though most of it is a waste of time...
+# def handle_cast({:redraw, %{data: text} = args}, scene) when is_bitstring(text) do
+#   Logger.debug "converting text input to list of lines..."
+#   lines = String.split(text, @newline_char)
+#   GenServer.cast(self(), {:redraw, Map.put(args, :data, lines)})
+#   {:noreply, scene}
+# end
 
-  # def handle_update(%{text: t, cursor: c, scroll_acc: s} = data, opts, scene) when is_bitstring(t) do
-  #   # IO.puts "HAND:ING UPDATEEEE"
-  #   # lines = String.split(t, @newline_char)
-  #   GenServer.cast(self(), %{data: t, cursor: c})
-  #   GenServer.cast(self(), %{scroll_acc: s})
-  #   {:noreply, scene}
-  # end  
-
-
-  # def handle_cast({:redraw, %{data: text} = args}, scene) when is_bitstring(text) do
-  #   Logger.debug "converting text input to list of lines..."
-  #   lines = String.split(text, @newline_char)
-  #   GenServer.cast(self(), {:redraw, Map.put(args, :data, lines)})
-  #   {:noreply, scene}
-  # end
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  # defmodule Scenic.Component.Input.TextField do
+# defmodule Scenic.Component.Input.TextField do
 #     @moduledoc """
 #     Add a text field input to a graph
 #     ## Data
@@ -1156,5 +1156,3 @@ end
 #       {:reply, {:ok, value}, scene}
 #     end
 #   end
-
-
