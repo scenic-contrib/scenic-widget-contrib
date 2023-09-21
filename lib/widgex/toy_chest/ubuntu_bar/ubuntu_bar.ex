@@ -10,7 +10,8 @@ defmodule ScenicWidgets.UbuntuBar do
   def draw do
     %__MODULE__{
       menu_map: [
-        %{glyph: "~", hi: 1}
+        # %{glyph: "~", hi: 1}
+        Widgex.ToyChest.Glyph.build(%{id: :g, glyph: "!"})
       ],
       theme: QuillEx.GUI.Themes.midnight_shadow()
     }
@@ -25,16 +26,17 @@ defmodule ScenicWidgets.UbuntuBar do
       t: {5, 100},
       font: :ibm_plex_mono
     )
-    |> Widgex.ToyChest.Glyph.add_to_graph(%{})
   end
 
   def render_glyphs(graph, %__MODULE__{layout: {:column, :center}} = state, %Frame{} = f) do
     # we want to render each glyph as a square, in a central column
     box_size = f.size.width
 
-    Enum.reduce(state.menu_map, graph, fn %{glyph: glyph, hi: hi}, graph ->
+    Enum.reduce(state.menu_map, graph, fn glyph, graph ->
       graph
-      |> render_glyph(glyph, box_size)
+      |> Widgex.ToyChest.Glyph.add_to_graph(%{glyph | size: box_size})
+
+      # |> render_glyph(glyph, box_size)
     end)
 
     # final_graph
