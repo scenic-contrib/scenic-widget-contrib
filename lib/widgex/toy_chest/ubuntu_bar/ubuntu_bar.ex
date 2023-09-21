@@ -22,9 +22,10 @@ defmodule ScenicWidgets.UbuntuBar do
     |> render_glyphs(state, f)
     |> Scenic.Components.button("Sample Button",
       id: :sample_btn_id,
-      t: {10, 10},
+      t: {5, 100},
       font: :ibm_plex_mono
     )
+    |> Widgex.ToyChest.Glyph.add_to_graph(%{})
   end
 
   def render_glyphs(graph, %__MODULE__{layout: {:column, :center}} = state, %Frame{} = f) do
@@ -83,6 +84,7 @@ defmodule ScenicWidgets.UbuntuBar do
         _context,
         scene
       ) do
+    IO.puts("GLUPH CLICKED")
     bounds = Scenic.Graph.bounds(scene.assigns.graph)
 
     if click_coords |> ScenicWidgets.Utils.inside?(bounds) do
@@ -99,6 +101,11 @@ defmodule ScenicWidgets.UbuntuBar do
       )
       when x in [@key_released, @key_held] do
     # ignore...
+    {:noreply, scene}
+  end
+
+  def handle_event(event, _from_pid, scene) do
+    IO.inspect(event)
     {:noreply, scene}
   end
 end
