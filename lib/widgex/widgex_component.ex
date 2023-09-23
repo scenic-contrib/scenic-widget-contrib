@@ -2,6 +2,7 @@ defmodule Widgex.Component do
   defmacro __using__(opts) do
     quote location: :keep, bind_quoted: [opts: opts] do
       use Scenic.Component
+      use ScenicWidgets.ScenicEventsDefinitions
       require Logger
       alias Widgex.Structs.{Coordinates, Dimensions, Frame}
 
@@ -16,6 +17,9 @@ defmodule Widgex.Component do
       # but for us it's always the same
       @impl Scenic.Component
       def init(scene, {state, %Frame{} = frame}, opts) when is_struct(state) do
+        # TODO stuff like theme, frame etc all needs to be apart of the "higher level" struct for a component, abstracted away from the component state... probably Scenic can does this or at least should do it!
+        # init_theme = ScenicWidgets.Utils.Theme.get_theme(opts)
+
         init_graph = render_group(state, frame, opts)
 
         init_scene =

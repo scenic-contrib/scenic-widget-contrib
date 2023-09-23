@@ -19,7 +19,7 @@ defmodule Widgex.ToyChest.Glyph do
         metrics: font_metrics
       },
       tile: %{
-        color: :pink
+        color: QuillEx.GUI.Themes.midnight_shadow().active
       }
     }
   end
@@ -43,6 +43,17 @@ defmodule Widgex.ToyChest.Glyph do
       |> push_graph(init_graph)
 
     {:ok, init_scene}
+  end
+
+  def handle_input(input, ref, scene) do
+    IO.puts("WEEEEEEEEEEEEEEEEEEE GOT INPUT")
+    {:noreply, scene}
+  end
+
+  @impl Scenic.Component
+  def bounds(state, _opts) do
+    # {0.0, 0.0, state.size, state.size}
+    {0.0, 0.0, 199, 199}
   end
 
   # the glyph ratio is, what % of the box do we want to take up with the glyph

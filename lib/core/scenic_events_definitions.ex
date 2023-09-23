@@ -32,7 +32,9 @@ defmodule ScenicWidgets.ScenicEventsDefinitions do
 
       # for mouse-related events, e.g. `{:cursor_button, {:btn_left, 1, [], _coords}}`
       @click 1
+      @clicked @click
       @release_click 0
+      @un_click @release_click
 
       @space_bar {:key, {:key_space, @key_pressed, []}}
 
