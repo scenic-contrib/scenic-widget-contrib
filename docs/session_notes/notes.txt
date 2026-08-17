@@ -1,0 +1,95 @@
+If you were to write your own HTML renderer in 2024, you would need to focus on certain core HTML components and functionality. Here's a breakdown of the essential HTML elements and features you'd need to account for:
+1. Document Structure
+
+    <html>: Root element of an HTML document.
+    <head>: Contains metadata about the document (title, charset, etc.).
+    <body>: Holds the actual content of the document.
+    <title>: Title of the document, shown in the browser tab.
+    <meta>: Various metadata, including character encoding (<meta charset="UTF-8">).
+    <link>: Used for external resources like stylesheets.
+    <script>: Includes JavaScript.
+
+2. Text Content Elements
+
+    <p>: Paragraphs.
+    **<h1> to <h6>: Headings.
+    <span>: Inline text container.
+    <div>: Block-level container.
+    <strong>, <em>: Semantic formatting for bold and italics (important for accessibility).
+    <br>: Line breaks.
+    <blockquote>, <cite>: Quoted text and citations.
+
+3. Lists
+
+    <ul>: Unordered lists.
+    <ol>: Ordered lists.
+    <li>: List items.
+
+4. Media
+
+    <img>: Images.
+    <video>: Videos.
+    <audio>: Audio.
+    <source>: Source files for multimedia elements.
+
+5. Links and Navigation
+
+    <a>: Hyperlinks.
+    <nav>: Navigation links.
+
+6. Tables
+
+    <table>: Table container.
+    <thead>, <tbody>, <tfoot>: Table header, body, and footer.
+    <tr>: Table rows.
+    <td>, <th>: Table cells and headers.
+
+7. Forms and Input
+
+    <form>: Form container.
+    <input>: General input elements (text, checkbox, radio, etc.).
+    <textarea>: Multi-line text input.
+    <button>: Button elements.
+    <select>, <option>: Dropdowns and options.
+    <label>: Label for input elements.
+    <fieldset>, <legend>: Grouping form elements.
+
+8. Interactive Elements
+
+    <details>: Create disclosure widgets.
+    <summary>: Caption for disclosure elements.
+    <dialog>: Modal dialogs.
+
+9. Semantic Containers
+
+    <header>, <footer>, <section>, <article>, <aside>: Structure for sections of a page.
+
+10. CSS Integration
+
+    <style>: Inline styles in the HTML document.
+    <link rel="stylesheet">: Linking external CSS.
+    style attribute: Inline styles directly on elements.
+
+11. Scripting and Data
+
+    <script>: Client-side scripting, like JavaScript.
+    <noscript>: Fallback for when JavaScript is disabled.
+    <template>: A fragment of HTML for later use (e.g., with JavaScript).
+    <canvas>: A drawing surface for rendering graphics with JavaScript.
+
+12. Other
+
+    <iframe>: Embedding another document.
+    <svg>: Scalable Vector Graphics for rendering 2D graphics directly in the document.
+    <object>, <embed>: Embedding external resources (like PDFs, Flash, etc.).
+
+Essential Considerations:
+
+    Box Model: You will need to implement the box model (margins, padding, borders) to properly handle layout.
+    Layout: Handling different layouts, including flexbox, grid, and CSS floats.
+    Fonts and Text Rendering: You will need to manage font loading, text metrics, and proper alignment (vertical/horizontal).
+    Styling: Basic support for CSS properties like color, background, border, padding, margins, etc.
+    Responsive Design: Implement media queries or a responsive approach to handle different device screen sizes.
+    Event Handling: You will need to account for user interaction through events like click, hover, input.
+
+By implementing these core HTML components and functionality, your renderer would support the majority of standard web content. Handling complex layout engines, CSS, and JavaScript execution will be more advanced, but starting with these basics will give you a strong foundation.

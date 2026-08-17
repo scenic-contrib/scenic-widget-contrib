@@ -11,6 +11,11 @@ defmodule ScenicWidgets.Utils do
     x >= left and x <= right and (y >= top and y <= bottom)
   end
 
+  # this clause is here because if the %Scenic.Graph{} is empty, bounds returns nil
+  def inside?(_coords, nil = _bounds) do
+    false
+  end
+
   @doc """
   Wrap and shorten text to a set number of lines
 
@@ -35,7 +40,7 @@ defmodule ScenicWidgets.Utils do
         Enum.slice(lines, 0..(num_lines - 2)),
         # Join the last two lines and re-shorten it (the wrapping may have
         # introduced an extra line)
-        Enum.slice(lines, (num_lines - 1)..-1)
+        Enum.slice(lines, (num_lines - 1)..-1//1)
         |> Enum.join(" ")
         |> FontMetrics.shorten(line_width, font_size, font_metrics)
       ])
