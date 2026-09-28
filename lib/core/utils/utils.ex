@@ -11,6 +11,11 @@ defmodule ScenicWidgets.Utils do
     x >= left and x <= right and (y >= top and y <= bottom)
   end
 
+  # this clause is here because if the %Scenic.Graph{} is empty, bounds returns nil
+  def inside?(_coords, nil = _bounds) do
+    false
+  end
+
   @doc """
   Wrap and shorten text to a set number of lines
 
